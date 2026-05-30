@@ -1,15 +1,12 @@
-FROM python:3.11-slim
-
+FROM node:18-alpine AS builder
 WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
+RUN npm run build
 
-# Создаём непривилегированного пользователя
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
-USER appuser
-
+FROM nginx:stable-alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 5001
-CMD ["python", "app.py"]
+CMD ["nginx", "-g", "daemon off;"]
