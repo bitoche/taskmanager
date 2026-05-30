@@ -52,6 +52,16 @@ def get_task_by_id(task_id):
     task = db_handler.get_task_by_id(task_id)
     return jsonify(task)
 
+@app.route('/api/tasks/between', methods=['GET'])
+def list_tasks_bw():
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    if date_from and date_to:
+        tasks = db_handler.get_all_tasks_between_dates(date_from, date_to)
+    else:
+        tasks = db_handler.get_all_tasks()
+    return jsonify(tasks)
+
 @app.route('/api/tasks', methods=['POST'])
 def create_task():
     data = request.get_json()

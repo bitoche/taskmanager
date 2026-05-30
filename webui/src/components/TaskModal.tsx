@@ -5,7 +5,7 @@ interface Props {
   isOpen: boolean;
   task?: Task;
   defaultDate?: string;
-  onSave: (taskData: Omit<Task, 'id'>) => Promise<void>;
+  onSave: (taskData: Omit<Task, 'task_id'>) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
 }
@@ -14,16 +14,19 @@ const TaskModal: React.FC<Props> = ({ isOpen, task, defaultDate, onSave, onDelet
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [link, setLink] = useState('');
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
       setDueDate(task.due_date || '');
+      setLink(task.link_to_taskmanager || '');
     } else {
       setTitle('');
       setDescription('');
       setDueDate(defaultDate || '');
+      setLink('');
     }
   }, [task, defaultDate, isOpen]);
 
@@ -36,8 +39,9 @@ const TaskModal: React.FC<Props> = ({ isOpen, task, defaultDate, onSave, onDelet
     await onSave({
       title: title.trim(),
       description: description.trim() || null,
+      link_to_taskmanager: link.trim() || null,
       due_date: dueDate || null,
-      completed: task?.completed || false,
+      task_status: task?.task_status ?? null,
     });
   };
 
@@ -71,6 +75,22 @@ const TaskModal: React.FC<Props> = ({ isOpen, task, defaultDate, onSave, onDelet
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Подробности..."
+              style={{
+                resize: 'vertical',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}
+            />
+          </div>
+          <div className="form-group">
+            <label>Ссылка на внешний менеджер</label>
+            <input
+              type="text"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://..."
             />
           </div>
           <div className="form-group">

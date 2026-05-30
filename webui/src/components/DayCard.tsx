@@ -7,6 +7,8 @@ interface Props {
   isToday: boolean;
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
+  onMoveTask: (taskId: number, newDueDate: string) => void;
+  dateStr: string;
 }
 
 function formatDisplayDate(date: Date): string {
@@ -30,17 +32,36 @@ function escapeHtml(str: string | null | undefined): string {
   });
 }
 
-const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask }) => {
+const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask, onMoveTask, dateStr }) => {
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.task-item')) return;
     onAddTask();
   };
 
+  const handleDragStart = (e: React.DragEvent, taskId: number) => {
+    e.dataTransfer.setData('text/plain', taskId.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const taskId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(taskId)) {
+      onMoveTask(taskId, dateStr);
+    }
+  };
+
   return (
     <div
       className={`day-card ${isToday ? 'today-card' : ''}`}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       onClick={handleCardClick}
-      data-date={date.toISOString().slice(0, 10)}
+      data-date={dateStr}
     >
       <div className="day-header">
         <div className="date">{formatDisplayDate(date)}</div>
@@ -51,33 +72,20 @@ const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask 
         {tasks.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#aaa' }}>—</div>
         ) : (
-          tasks.map((task) => {
-            let badge = null;
-            if (task.overdue_days && task.overdue_days > 0 && !task.completed) {
-              badge = <span className="overdue-badge">просрочка {task.overdue_days} дн.</span>;
-            } else if (task.completed) {
-              badge = <span className="completed-badge">✓ выполнено</span>;
-            }
-            return (
-              <div
-                key={task.id}
-                className="task-item"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditTask(task);
-                }}
-              >
-                <div className="task-title">
-                  <span>
-                    {escapeHtml(task.title)} {badge}
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#555' }}>
-                  {escapeHtml(task.description?.substring(0, 60))}
-                </div>
-              </div>
-            );
-          })
+          tasks.map((task) => (
+            <div
+              key={task.task_id}
+              className="task-item"
+              draggable
+              onDragStart={(e) => handleDragStart(e, task.task_id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditTask(task);
+              }}
+            >
+              <div className="task-title">{escapeHtml(task.title)}</div>
+            </div>
+          ))
         )}
       </div>
     </div>
