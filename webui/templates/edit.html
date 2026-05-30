@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Редактировать задачу{% endblock %}
+{% block content %}
+    <h2>Редактирование задачи</h2>
+    <form method="post" class="task-form">
+        <label for="title">Название</label>
+        <input type="text" name="title" id="title" value="{{ task.title }}" required>
+
+        <label for="description">Описание</label>
+        <textarea name="description" id="description" rows="4">{{ task.description }}</textarea>
+
+        <label>
+            <input type="checkbox" name="completed" {% if task.completed %}checked{% endif %}>
+            Задача выполнена
+        </label>
+
+        <button type="submit" class="btn submit">Сохранить</button>
+        <a href="{{ url_for('index') }}" class="btn cancel">Отмена</a>
+    </form>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Список задач{% endblock %}
+{% block content %}
+    <h2>Мои задачи</h2>
+    {% if tasks %}
+        <ul class="task-list">
+            {% for task in tasks %}
+            <li class="task-item {% if task.completed %}completed{% endif %}">
+                <div class="task-info">
+                    <strong>{{ task.title }}</strong>
+                    <p>{{ task.description }}</p>
+                    <small>Создано: {{ task.created_at[:16] if task.created_at else 'неизвестно' }}</small>
+                </div>
+                <div class="task-actions">
+                    <a href="{{ url_for('edit', task_id=task.id) }}" class="btn edit">✏️</a>
+                    <a href="{{ url_for('delete', task_id=task.id) }}" class="btn delete" onclick="return confirm('Удалить задачу?');">🗑️</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Нет задач. <a href="{{ url_for('create') }}">Создайте первую!</a></p>
+    {% endif %}
+{% endblock %}
