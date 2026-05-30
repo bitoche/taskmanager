@@ -2,8 +2,12 @@ services:
   taskservice:
     build: ./taskservice
     container_name: taskservice
+    command: sh -c "python -m app.api 2>&1 | tee /app/logs/taskservice.log"
+    ports:
+      - "8081:5000"
     volumes:
       - ./taskservice:/app
+      - ./logs:/app/logs
     networks:
       - internal
     # порты не открываем наружу
@@ -11,6 +15,10 @@ services:
   webui:
     build: ./webui
     container_name: webui
+    volumes:
+      - ./logs:/app/logs
+      - ./webui/static:/app/static:ro
+      - ./webui/templates:/app/templates:ro
     networks:
       - internal
     depends_on:

@@ -1,2 +1,4 @@
 Flask==2.3.3
 duckdb==1.5.3
+pandas==3.0.3
+pydantic

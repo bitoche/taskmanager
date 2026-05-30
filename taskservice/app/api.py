@@ -1,80 +1,98 @@
 from flask import Flask, request, jsonify
-from .models import get_db, init_db
+from pydantic import ValidationError
+from .models import init_db
+from datetime import date
+from .classes import CreateTaskDTO, UpdateTaskDTO
+from . import db_handler
+from flask.json.provider import DefaultJSONProvider
+import numpy as np
+import pandas as pd
+import math
 
 app = Flask(__name__)
 init_db()
 
-def get_next_id():
-    with get_db() as conn:
-        result = conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM tasks").fetchone()
-        return result[0]
+# Создаём свой кастомный JSON-провайдер
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, float) and math.isnan(obj):
+            return None
+        if isinstance(obj, np.floating) and np.isnan(obj):
+            return None
+        # Если это numpy int, конвертируем во встроенный int
+        if isinstance(obj, (np.integer, np.int32, np.int64)):
+            return int(obj)
+        # Если это numpy float, конвертируем во встроенный float
+        if isinstance(obj, (np.floating, np.float32, np.float64)):
+            return float(obj)
+        # Если это массив numpy, конвертируем в список
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        # Pandas Timestamp -> ISO строка
+        if isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        # Pandas NaT (пустая дата), NA, NaN -> None (будет null в JSON)
+        if isinstance(obj, (type(pd.NaT), type(pd.NA))):
+            return None
+        # Pandas Timedelta (если понадобится)
+        if isinstance(obj, pd.Timedelta):
+            return obj.total_seconds()
+        # Для всего остального вызываем стандартный метод
+        return super().default(obj)
 
-def task_to_dict(row):
-    """Преобразует строку из БД в словарь JSON."""
-    # row: (id, title, description, completed, created_at)
-    return {
-        "id": row[0],
-        "title": row[1],
-        "description": row[2],
-        "completed": bool(row[3]),
-        "created_at": row[4]
-    }
-
-# === API Endpoints ===
+app.json = CustomJSONProvider(app)
 
 @app.route('/api/tasks', methods=['GET'])
 def list_tasks():
-    with get_db() as conn:
-        rows = conn.execute("SELECT * FROM tasks ORDER BY id").fetchall()
-    return jsonify([task_to_dict(r) for r in rows])
+    tasks = db_handler.get_all_tasks()
+    return jsonify(tasks)
+
+@app.route('/api/tasks/<int:task_id>', methods=['GET'])
+def get_task_by_id(task_id):
+    task = db_handler.get_task_by_id(task_id)
+    return jsonify(task)
 
 @app.route('/api/tasks', methods=['POST'])
 def create_task():
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-    title = data.get('title')
-    if not title:
-        return jsonify({"error": "Title required"}), 400
-    desc = data.get('description', '')
-    next_id = get_next_id()
-    with get_db() as conn:
-        conn.execute("INSERT INTO tasks (id, title, description) VALUES (?, ?, ?)",
-                     (next_id, title, desc))
-    return jsonify({"id": next_id}), 201
-
-@app.route('/api/tasks/<int:task_id>', methods=['GET'])
-def get_task(task_id):
-    with get_db() as conn:
-        row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
-    if not row:
-        return jsonify({"error": "Task not found"}), 404
-    return jsonify(task_to_dict(row))
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        task_dto = CreateTaskDTO(**data)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    if task_dto.due_date:
+        try:
+            task_dto.due_date = date.fromisoformat(task_dto.due_date).isoformat()
+        except ValueError:
+            return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
+    db_handler.insert_task(task_dto)
+    return jsonify({"status": 'success'})
 
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-    title = data.get('title')
-    desc = data.get('description')
-    completed = data.get('completed', False)
-    with get_db() as conn:
-        # Обновляем только переданные поля
-        conn.execute("""
-            UPDATE tasks 
-            SET title = COALESCE(?, title), 
-                description = COALESCE(?, description),
-                completed = ?
-            WHERE id = ?
-        """, (title, desc, completed, task_id))
-    return jsonify({"status": "updated"})
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        upd_task_dto = UpdateTaskDTO(**data, task_id=task_id)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    if upd_task_dto.due_date:
+        try:
+            upd_task_dto.due_date = date.fromisoformat(upd_task_dto.due_date).isoformat()
+        except ValueError:
+            return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
+    db_handler.update_task(upd_task_dto)
+    return jsonify({"status": 'success'})
+    
 
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    with get_db() as conn:
-        conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
-    return jsonify({"status": "deleted"})
+    if db_handler.delete_task(task_id):
+        return jsonify({"status": "deleted"})
+    else:
+        return jsonify({'status': 'not deleted'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
