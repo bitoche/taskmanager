@@ -14,15 +14,14 @@ services:
 
   webui:
     build: ./webui
+    expose:
+      - "5001"
     container_name: webui
     volumes:
       - ./logs:/app/logs
-      - ./webui/static:/app/static:ro
-      - ./webui/templates:/app/templates:ro
     networks:
       - internal
-    depends_on:
-      - taskservice
+    restart: unless-stopped
 
   gateway:
     image: nginx:alpine

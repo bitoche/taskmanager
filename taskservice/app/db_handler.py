@@ -10,9 +10,10 @@ def get_all_tasks() -> pd.DataFrame:
 def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataFrame:
     with get_db() as conn:
         df = conn.sql(f"""
-            SELECT * FROM "tasks" ORDER BY due_date, task_id
+            SELECT * FROM "tasks"
             WHERE due_date <= '{date_to_iso}'::date
-            AND '{date_from_iso}'::date <= due_date;
+            AND '{date_from_iso}'::date <= due_date
+            ORDER BY due_date, task_id;
         """).df()
     return _df_to_list_of_obj(df, Task)
 
