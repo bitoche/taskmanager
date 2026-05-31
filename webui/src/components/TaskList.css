@@ -1,0 +1,123 @@
+.task-list-container {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.task-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.task-list-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1e2a3a;
+}
+
+.task-list-search input {
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  border: 1px solid #cbd5e1;
+  width: 280px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.task-list-table-wrapper {
+  overflow-x: auto;
+}
+
+.task-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.task-list-table th {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  background: #eef2f8;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  border-radius: 12px;
+}
+
+.task-list-table th:hover {
+  background: #e2e8f0;
+}
+
+.task-list-table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #cbd5e1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.task-row:hover {
+  background: #f1f5f9;
+}
+
+.task-row.completed-row {
+  opacity: 0.7;
+  background: #e9ecef;
+}
+
+.task-title-cell {
+  font-weight: 500;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-date-cell {
+  white-space: nowrap;
+}
+
+.overdue-badge-list {
+  background: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.task-status-cell {
+  white-space: nowrap;
+}
+
+.task-action-cell {
+  text-align: center;
+  width: 60px;
+}
+
+.status-toggle-btn-list {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background 0.1s;
+}
+
+.status-toggle-btn-list:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.no-tasks {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+}

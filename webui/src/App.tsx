@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchTasksRange, createTask, updateTask, deleteTask } from './api';
 import { Task, CreateTaskDTO, UpdateTaskDTO } from './types';
-import CalendarStrip from './components/CalendarStrip';
+import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
 import TaskModal from './components/TaskModal';
+import TaskList from './components/TaskList';
 
 const App: React.FC = () => {
+  const calendarRef = useRef<CalendarStripRef>(null);
+  const handleTaskClickFromList = (task: Task) => {
+    if (task.due_date) {
+      calendarRef.current?.scrollToDate(task.due_date);
+    }
+    handleEditTask(task);
+  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState<{ isOpen: boolean; task?: Task | null; defaultDate?: string }>({
@@ -133,6 +141,7 @@ const App: React.FC = () => {
         </div>
       </div>
       <CalendarStrip
+        ref={calendarRef}
         tasks={tasks}
         onAddTask={handleAddTask}
         onEditTask={handleEditTask}
@@ -143,6 +152,11 @@ const App: React.FC = () => {
       <footer>
         Клик по дню – новая задача, по названию – редактировать.
       </footer>
+      <TaskList
+        tasks={tasks}
+        onTaskClick={handleTaskClickFromList}
+        onToggleStatus={handleToggleStatus}
+      />
       <TaskModal
         isOpen={modalState.isOpen}
         task={modalState.task || undefined}

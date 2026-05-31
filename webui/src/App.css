@@ -250,6 +250,9 @@ footer {
   text-decoration: line-through;
   color: #6c757d;
 }
+.task-title-text {
+  text-wrap: auto
+}
 .task-actions {
   display: flex;
   align-items: center;
