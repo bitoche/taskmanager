@@ -100,7 +100,7 @@ const DayCard: React.FC<Props> = ({
 
             let badge = null;
             if (isActive && overdue > 0) {
-              badge = <span className="overdue-badge">просрочка {overdue} дн.</span>;
+              badge = <span className="overdue-badge">{overdue}⟳</span>;
             }
 
             return (
