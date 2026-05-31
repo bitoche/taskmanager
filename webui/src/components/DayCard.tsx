@@ -8,6 +8,7 @@ interface Props {
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
   onMoveTask: (taskId: number, newDueDate: string) => void;
+  onToggleStatus: (taskId: number, currentStatus: number) => void;  // новый проп
   dateStr: string;
 }
 
@@ -32,7 +33,21 @@ function escapeHtml(str: string | null | undefined): string {
   });
 }
 
-const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask, onMoveTask, dateStr }) => {
+function getOverdueDays(dueDateStr: string | null | undefined): number {
+  if (!dueDateStr) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Парсим dueDateStr как локальную дату
+  const parts = dueDateStr.split('-');
+  const due = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const diffTime = today.getTime() - due.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
+
+const DayCard: React.FC<Props> = ({ 
+  date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, dateStr 
+}) => {
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.task-item')) return;
     onAddTask();
@@ -55,6 +70,12 @@ const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask,
     }
   };
 
+  const handleStatusToggle = (e: React.MouseEvent, taskId: number, currentStatus: number) => {
+    e.stopPropagation();
+    const newStatus = currentStatus === 2 ? 1 : 2;
+    onToggleStatus(taskId, newStatus);
+  };
+
   return (
     <div
       className={`day-card ${isToday ? 'today-card' : ''}`}
@@ -72,20 +93,43 @@ const DayCard: React.FC<Props> = ({ date, tasks, isToday, onAddTask, onEditTask,
         {tasks.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#aaa' }}>—</div>
         ) : (
-          tasks.map((task) => (
-            <div
-              key={task.task_id}
-              className="task-item"
-              draggable
-              onDragStart={(e) => handleDragStart(e, task.task_id)}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditTask(task);
-              }}
-            >
-              <div className="task-title">{escapeHtml(task.title)}</div>
-            </div>
-          ))
+          tasks.map((task) => {
+            const overdue = getOverdueDays(task.due_date);
+            const isCompleted = task.task_status === 2;
+            const isActive = task.task_status === 1;
+
+            let badge = null;
+            if (isActive && overdue > 0) {
+              badge = <span className="overdue-badge">просрочка {overdue} дн.</span>;
+            }
+
+            return (
+              <div
+                key={task.task_id}
+                className={`task-item ${isCompleted ? 'completed-task' : ''}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, task.task_id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditTask(task);
+                }}
+              >
+                <div className="task-title">
+                  <span className="task-title-text">{escapeHtml(task.title)}</span>
+                  <div className="task-actions">
+                    {badge}
+                    <button
+                      className="status-toggle-btn"
+                      onClick={(e) => handleStatusToggle(e, task.task_id, task.task_status || 1)}
+                      title={isCompleted ? "Отметить как невыполненную" : "Отметить как выполненную"}
+                    >
+                      {isCompleted ? '✅' : '⬜'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

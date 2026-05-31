@@ -2,44 +2,52 @@ import { Task, CreateTaskDTO, UpdateTaskDTO } from './types';
 
 const API_BASE = '/api';
 
-// Получить все задачи (без фильтра – пригодится для начальной загрузки)
-export async function fetchTasks(): Promise<Task[]> {
-  const res = await fetch(`${API_BASE}/tasks`);
-  if (!res.ok) throw new Error('Failed to fetch tasks');
-  return res.json();
+function normalizeDate(date?: string | null): string | undefined {
+  if (!date) return undefined;
+  // Если дата содержит 'T', обрезаем до первой буквы T
+  const tIndex = date.indexOf('T');
+  if (tIndex !== -1) return date.slice(0, tIndex);
+  return date;
 }
 
-// Получить задачи за диапазон дат
 export async function fetchTasksRange(dateFrom: string, dateTo: string): Promise<Task[]> {
-  const res = await fetch(`${API_BASE}/tasks/between?date_from=${dateFrom}&date_to=${dateTo}`);
+  const res = await fetch(`${API_BASE}/tasks?date_from=${dateFrom}&date_to=${dateTo}`);
   if (!res.ok) throw new Error('Failed to fetch tasks range');
-  const data = await res.json();
-  console.log('Fetched tasks:', data); // для отладки
-  return data;
+  const tasks: Task[] = await res.json();
+  // Приводим due_date к формату YYYY-MM-DD
+  return tasks.map(task => ({
+    ...task,
+    due_date: task.due_date ? task.due_date.slice(0, 10) : null,
+  }));
 }
 
-// Создать задачу
 export async function createTask(task: CreateTaskDTO): Promise<void> {
+  const payload = {
+    ...task,
+    due_date: normalizeDate(task.due_date),
+  };
   const res = await fetch(`${API_BASE}/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(task),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to create task');
-  // ответ: { "status": "success" }
 }
 
-// Обновить задачу
 export async function updateTask(taskId: number, task: UpdateTaskDTO): Promise<void> {
+  const { task_id, ...body } = task;
+  const payload = {
+    ...body,
+    due_date: normalizeDate(body.due_date),
+  };
   const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(task),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to update task');
 }
 
-// Удалить задачу
 export async function deleteTask(taskId: number): Promise<void> {
   const res = await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete task');

@@ -20,7 +20,11 @@ const TaskModal: React.FC<Props> = ({ isOpen, task, defaultDate, onSave, onDelet
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
-      setDueDate(task.due_date || '');
+      setDueDate(
+        task.due_date
+          ? task.due_date.slice(0, 10)
+          : ''
+      );
       setLink(task.link_to_taskmanager || '');
     } else {
       setTitle('');

@@ -26,13 +26,21 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const today = new Date();
     const from = new Date(today);
     from.setDate(today.getDate() - 30);
     const to = new Date(today);
     to.setDate(today.getDate() + 30);
-    loadTasksForRange(from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)).finally(() => setLoading(false));
+    loadTasksForRange(formatLocalDate(from), formatLocalDate(to))
+      .finally(() => setLoading(false));
   }, [loadTasksForRange]);
 
   const handleAddTask = (date: string) => {
@@ -69,7 +77,7 @@ const App: React.FC = () => {
       from.setDate(today.getDate() - 30);
       const to = new Date(today);
       to.setDate(today.getDate() + 30);
-      await loadTasksForRange(from.toISOString().slice(0, 10), to.toISOString().slice(0, 10));
+      await loadTasksForRange(formatLocalDate(from), formatLocalDate(to));
     }
     setModalState({ isOpen: false });
   };
@@ -94,12 +102,25 @@ const App: React.FC = () => {
       task_status: taskToUpdate.task_status,
     };
     await updateTask(taskId, updateDto);
-    setTasks(prev => prev.map(t => 
-      t.task_id === taskId ? { ...t, due_date: newDueDate } : t
-    ));
+    setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, due_date: newDueDate } : t));
   };
 
   const closeModal = () => setModalState({ isOpen: false });
+
+  const handleToggleStatus = async (taskId: number, newStatus: number) => {
+    const taskToUpdate = tasks.find(t => t.task_id === taskId);
+    if (!taskToUpdate) return;
+    const updateDto: UpdateTaskDTO = {
+      task_id: taskId,
+      title: taskToUpdate.title,
+      description: taskToUpdate.description,
+      link_to_taskmanager: taskToUpdate.link_to_taskmanager,
+      due_date: taskToUpdate.due_date,
+      task_status: newStatus,
+    };
+    await updateTask(taskId, updateDto);
+    setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, task_status: newStatus } : t));
+  };
 
   if (loading) return <div className="calendar-main">Загрузка...</div>;
 
@@ -117,6 +138,7 @@ const App: React.FC = () => {
         onEditTask={handleEditTask}
         onMoveTask={handleMoveTask}
         onLoadRange={loadTasksForRange}
+        onToggleStatus={handleToggleStatus}
       />
       <footer>
         Клик по дню – новая задача, по названию – редактировать.
