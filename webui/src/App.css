@@ -104,7 +104,7 @@ body {
 .day-header {
   padding: 1rem 0.6rem 0.6rem;
   text-align: center;
-  border-bottom: 2px solid #e2eaf1;
+  /* border-bottom: 2px solid #e2eaf1; */
 }
 .date {
   font-size: 2rem;
@@ -166,7 +166,7 @@ body {
   font-size: 0.65rem;
   padding: 2px 8px;
   border-radius: 20px;
-  margin-left: 6px;
+  margin-right: 6px;
 }
 .completed-badge {
   background: #28a745;
@@ -272,4 +272,18 @@ footer {
 }
 .status-toggle-btn:hover {
   background: rgba(0,0,0,0.1);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+  border-radius: 20px;
+  transition: background 0.1s;
+  margin-right: 4px;
+}
+.link-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
 }

@@ -86,7 +86,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
         <div className="task-list-search">
           <input
             type="text"
-            placeholder="Поиск по названию, описанию, ссылке..."
+            placeholder="🔎Поиск"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

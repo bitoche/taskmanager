@@ -133,39 +133,42 @@ const App: React.FC = () => {
   if (loading) return <div className="calendar-main">Загрузка...</div>;
 
   return (
-    <div className="calendar-main">
-      <div className="calendar-header">
-        <div className="title-section">
-          <h1>Календарь задач</h1>
-          <span className="semi-hidden-text">таск-менеджер на React</span>
+    <div>
+      <div className="calendar-main">
+        <div className="calendar-header">
+          <div className="title-section">
+            <h1>Календарь задач</h1>
+            <span className="semi-hidden-text">таск-менеджер на React</span>
+          </div>
         </div>
+        <CalendarStrip
+          ref={calendarRef}
+          tasks={tasks}
+          onAddTask={handleAddTask}
+          onEditTask={handleEditTask}
+          onMoveTask={handleMoveTask}
+          onLoadRange={loadTasksForRange}
+          onToggleStatus={handleToggleStatus}
+        />
+        <footer>
+          Клик по дню – новая задача, по названию – редактировать.
+        </footer>
+        <TaskModal
+          isOpen={modalState.isOpen}
+          task={modalState.task || undefined}
+          defaultDate={modalState.defaultDate}
+          onSave={handleSaveTask}
+          onDelete={handleDeleteTask}
+          onClose={closeModal}
+        />
       </div>
-      <CalendarStrip
-        ref={calendarRef}
-        tasks={tasks}
-        onAddTask={handleAddTask}
-        onEditTask={handleEditTask}
-        onMoveTask={handleMoveTask}
-        onLoadRange={loadTasksForRange}
-        onToggleStatus={handleToggleStatus}
-      />
-      <footer>
-        Клик по дню – новая задача, по названию – редактировать.
-      </footer>
       <TaskList
-        tasks={tasks}
-        onTaskClick={handleTaskClickFromList}
-        onToggleStatus={handleToggleStatus}
-      />
-      <TaskModal
-        isOpen={modalState.isOpen}
-        task={modalState.task || undefined}
-        defaultDate={modalState.defaultDate}
-        onSave={handleSaveTask}
-        onDelete={handleDeleteTask}
-        onClose={closeModal}
-      />
+          tasks={tasks}
+          onTaskClick={handleTaskClickFromList}
+          onToggleStatus={handleToggleStatus}
+        />
     </div>
+    
   );
 };
 

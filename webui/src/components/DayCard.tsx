@@ -8,7 +8,7 @@ interface Props {
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
   onMoveTask: (taskId: number, newDueDate: string) => void;
-  onToggleStatus: (taskId: number, currentStatus: number) => void;  // новый проп
+  onToggleStatus: (taskId: number, currentStatus: number) => void;
   dateStr: string;
 }
 
@@ -37,7 +37,6 @@ function getOverdueDays(dueDateStr: string | null | undefined): number {
   if (!dueDateStr) return 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  // Парсим dueDateStr как локальную дату
   const parts = dueDateStr.split('-');
   const due = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   const diffTime = today.getTime() - due.getTime();
@@ -76,6 +75,16 @@ const DayCard: React.FC<Props> = ({
     onToggleStatus(taskId, newStatus);
   };
 
+  const handleOpenLink = (e: React.MouseEvent, url: string) => {
+    e.stopPropagation();
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else if (url) {
+      // Если ссылка не начинается с http, добавляем https://
+      window.open('https://' + url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div
       className={`day-card ${isToday ? 'today-card' : ''}`}
@@ -87,7 +96,7 @@ const DayCard: React.FC<Props> = ({
       <div className="day-header">
         <div className="date">{formatDisplayDate(date)}</div>
         <div className="weekday">{formatWeekday(date)}</div>
-        <div className="month-hint">{date.toLocaleString('ru-RU', { month: 'long' })}</div>
+        <div hidden className="month-hint">{date.toLocaleString('ru-RU', { month: 'long' })}</div>
       </div>
       <div className="tasks-list">
         {tasks.length === 0 ? (
@@ -97,10 +106,11 @@ const DayCard: React.FC<Props> = ({
             const overdue = getOverdueDays(task.due_date);
             const isCompleted = task.task_status === 2;
             const isActive = task.task_status === 1;
+            const hasLink = task.link_to_taskmanager && task.link_to_taskmanager.trim() !== '';
 
             let badge = null;
             if (isActive && overdue > 0) {
-              let title_badge = 'Дней просрочки: '+overdue
+              let title_badge = 'Дней просрочки: ' + overdue;
               badge = <span title={title_badge} className="overdue-badge">{overdue}⟳</span>;
             }
 
@@ -116,8 +126,8 @@ const DayCard: React.FC<Props> = ({
                 }}
               >
                 <div className="task-title">
-                  <span className="task-title-text">{escapeHtml(task.title)}</span>
                   {badge}
+                  <span className="task-title-text">{escapeHtml(task.title)}</span>
                   <div className="task-actions">
                     <button
                       className="status-toggle-btn"
@@ -126,6 +136,15 @@ const DayCard: React.FC<Props> = ({
                     >
                       {isCompleted ? '✅' : '⬜'}
                     </button>
+                    {hasLink && (
+                      <button
+                        className="link-btn"
+                        onClick={(e) => handleOpenLink(e, task.link_to_taskmanager!)}
+                        title="Открыть во внешнем менеджере"
+                      >
+                        🔗
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

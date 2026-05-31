@@ -81,7 +81,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     if (initialized.current) return;
 
     const today = getTodayDate();
-    const start = addDays(today, -3);
+    const start = addDays(today, -INITIAL_DAYS_BEFORE);
     const end = addDays(today, INITIAL_DAYS_BEFORE + INITIAL_DAYS_AFTER);
 
     const newDates: Date[] = [];
