@@ -100,7 +100,8 @@ const DayCard: React.FC<Props> = ({
 
             let badge = null;
             if (isActive && overdue > 0) {
-              badge = <span className="overdue-badge">{overdue}⟳</span>;
+              let title_badge = 'Дней просрочки: '+overdue
+              badge = <span title={title_badge} className="overdue-badge">{overdue}⟳</span>;
             }
 
             return (
@@ -116,8 +117,8 @@ const DayCard: React.FC<Props> = ({
               >
                 <div className="task-title">
                   <span className="task-title-text">{escapeHtml(task.title)}</span>
+                  {badge}
                   <div className="task-actions">
-                    {badge}
                     <button
                       className="status-toggle-btn"
                       onClick={(e) => handleStatusToggle(e, task.task_id, task.task_status || 1)}
