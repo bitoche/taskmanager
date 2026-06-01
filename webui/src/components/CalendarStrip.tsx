@@ -1,4 +1,4 @@
-import /* React, */{
+import /* React, */ {
   useRef,
   useEffect,
   useState,
@@ -43,9 +43,8 @@ interface Props {
   onLoadRange: (from: string, to: string) => Promise<Task[]>;
   onToggleStatus: (taskId: number, newStatus: number) => void;
 }
-
 export interface CalendarStripRef {
-  scrollToDate: (dateStr: string) => void;
+  scrollToDate: (dateStr: string, taskId?: number) => void;
 }
 
 const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
@@ -58,7 +57,8 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
 }, ref) => {
   const [dates, setDates] = useState<Date[]>([]);
   const [loadedDateKeys, setLoadedDateKeys] = useState<Set<string>>(new Set());
-
+  const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
+  
   const stripRef = useRef<HTMLDivElement>(null);
   const datesRef = useRef<Date[]>([]);
 
@@ -69,6 +69,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   const initialAutoScrollLock = useRef(true);
 
   const todayStr = formatLocalDate(getTodayDate());
+
 
   useEffect(() => {
     datesRef.current = dates;
@@ -263,19 +264,56 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     };
   }, []);
 
+  const navigateToDate = useCallback((dateStr: string) => {
+    if (!stripRef.current) return;
+    const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
+    if (targetCard) {
+      stripRef.current.scrollTo({
+        left: Math.max(0, targetCard.offsetLeft - 24),
+        behavior: 'smooth',
+      });
+    }
+  }, []);
+
   // =========================
   // TASK GROUPING
   // =========================
-  const groupTasksByDate = (): Map<string, Task[]> => {
-    const map = new Map<string, Task[]>();
+  // Группировка задач с созданием призраков
+  const groupTasksByDate = (): Map<string, any[]> => { // используем any[] для упрощения, можно определить расширенный тип
+    const map = new Map<string, any[]>();
+    const today = getTodayDate();
+    const todayKey = formatLocalDate(today);
+    
     for (const task of tasks) {
-      let key = '';
+      let originalKey = '';
       if (task.due_date) {
-        key = task.due_date.slice(0, 10);
+        originalKey = task.due_date.slice(0, 10);
       }
-      if (loadedDateKeys.has(key) || key === '') {
-        if (!map.has(key)) map.set(key, []);
-        map.get(key)!.push(task);
+      const isActive = task.task_status === 1;
+      let isOverdue = false;
+      if (originalKey && isActive) {
+        const parts = originalKey.split('-');
+        const dueDateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        isOverdue = dueDateObj < today;
+      }
+      
+      // Основная дата отображения (сегодня, если просрочена и активна, иначе due_date)
+      const targetKey = (isActive && isOverdue) ? todayKey : originalKey;
+      
+      // Добавляем основную задачу (не призрак)
+      if (loadedDateKeys.has(targetKey) || targetKey === '') {
+        if (!map.has(targetKey)) map.set(targetKey, []);
+        map.get(targetKey)!.push({ ...task, isGhost: false });
+      }
+      
+      // Если задача активна, просрочена и имеет оригинальную дату, отличную от todayKey – создаём призрака в originalKey
+      if (isActive && isOverdue && originalKey && originalKey !== targetKey && loadedDateKeys.has(originalKey)) {
+        if (!map.has(originalKey)) map.set(originalKey, []);
+        map.get(originalKey)!.push({
+          ...task,
+          isGhost: true,
+          ghostTargetDate: targetKey, // куда прокрутить при клике (сегодняшний день)
+        });
       }
     }
     return map;
@@ -287,7 +325,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   // EXPOSE METHOD TO PARENT
   // =========================
   useImperativeHandle(ref, () => ({
-    scrollToDate: (dateStr: string) => {
+    scrollToDate: (dateStr: string, taskId?: number) => {
       if (!stripRef.current) return;
       const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
       if (targetCard) {
@@ -295,6 +333,13 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
           left: Math.max(0, targetCard.offsetLeft - 24),
           behavior: 'smooth',
         });
+        if (taskId !== undefined) {
+          // Даём время на прокрутку
+          setTimeout(() => {
+            setHighlightedTaskId(taskId);
+            setTimeout(() => setHighlightedTaskId(null), 2000);
+          }, 300);
+        }
       }
     },
   }));
@@ -323,7 +368,9 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
                 onEditTask={onEditTask}
                 onMoveTask={onMoveTask}
                 onToggleStatus={onToggleStatus}
+                onGhostClick={navigateToDate}
                 dateStr={dateStr}
+                highlightedTaskId={highlightedTaskId}
               />
             );
           })}

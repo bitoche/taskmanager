@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchTasksRange, createTask, updateTask, deleteTask } from './api';
+import { fetchTasksRange, createTask, updateTask, deleteTask, syncDownload, syncUpload } from './api';
 import { Task, CreateTaskDTO, UpdateTaskDTO } from './types';
 import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
 import TaskModal from './components/TaskModal';
@@ -7,17 +7,27 @@ import TaskList from './components/TaskList';
 
 const App: React.FC = () => {
   const calendarRef = useRef<CalendarStripRef>(null);
-  const handleTaskClickFromList = (task: Task) => {
-    if (task.due_date) {
-      calendarRef.current?.scrollToDate(task.due_date);
-    }
-    handleEditTask(task);
-  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const syncCounter = useRef(0);
   const [modalState, setModalState] = useState<{ isOpen: boolean; task?: Task | null; defaultDate?: string }>({
     isOpen: false,
   });
+
+  // Функция для выполнения синхронизации с облаком (с индикатором)
+  const performSync = useCallback(async (syncFn: () => Promise<void>) => {
+    syncCounter.current++;
+    if (syncCounter.current === 1) setSyncing(true);
+    try {
+      await syncFn();
+    } catch (err) {
+      console.error('Sync error:', err);
+    } finally {
+      syncCounter.current--;
+      if (syncCounter.current === 0) setSyncing(false);
+    }
+  }, []);
 
   const loadTasksForRange = useCallback(async (from: string, to: string) => {
     try {
@@ -41,15 +51,21 @@ const App: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Загрузка при старте + синхронизация (скачивание)
   useEffect(() => {
     const today = new Date();
     const from = new Date(today);
     from.setDate(today.getDate() - 30);
     const to = new Date(today);
     to.setDate(today.getDate() + 30);
-    loadTasksForRange(formatLocalDate(from), formatLocalDate(to))
+    const fromStr = formatLocalDate(from);
+    const toStr = formatLocalDate(to);
+
+    loadTasksForRange(fromStr, toStr)
+      .then(() => performSync(syncDownload))
+      .then(() => loadTasksForRange(fromStr, toStr))
       .finally(() => setLoading(false));
-  }, [loadTasksForRange]);
+  }, [loadTasksForRange, performSync]);
 
   const handleAddTask = (date: string) => {
     setModalState({ isOpen: true, task: null, defaultDate: date });
@@ -57,6 +73,13 @@ const App: React.FC = () => {
 
   const handleEditTask = (task: Task) => {
     setModalState({ isOpen: true, task });
+  };
+
+  const handleTaskClickFromList = (task: Task) => {
+    if (task.due_date) {
+      calendarRef.current?.scrollToDate(task.due_date, task.task_id);
+    }
+    // handleEditTask(task); // не открываем меню редактирования при клике на таску в списке
   };
 
   const handleSaveTask = async (taskData: Omit<Task, 'task_id'>) => {
@@ -71,6 +94,7 @@ const App: React.FC = () => {
       };
       await updateTask(modalState.task.task_id, updateDto);
       setTasks(prev => prev.map(t => t.task_id === modalState.task!.task_id ? { ...t, ...taskData } : t));
+      await performSync(syncUpload);
     } else {
       const createDto: CreateTaskDTO = {
         title: taskData.title,
@@ -86,6 +110,7 @@ const App: React.FC = () => {
       const to = new Date(today);
       to.setDate(today.getDate() + 30);
       await loadTasksForRange(formatLocalDate(from), formatLocalDate(to));
+      await performSync(syncUpload);
     }
     setModalState({ isOpen: false });
   };
@@ -94,6 +119,7 @@ const App: React.FC = () => {
     if (modalState.task) {
       await deleteTask(modalState.task.task_id);
       setTasks(prev => prev.filter(t => t.task_id !== modalState.task!.task_id));
+      await performSync(syncUpload);
       setModalState({ isOpen: false });
     }
   };
@@ -111,9 +137,8 @@ const App: React.FC = () => {
     };
     await updateTask(taskId, updateDto);
     setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, due_date: newDueDate } : t));
+    await performSync(syncUpload);
   };
-
-  const closeModal = () => setModalState({ isOpen: false });
 
   const handleToggleStatus = async (taskId: number, newStatus: number) => {
     const taskToUpdate = tasks.find(t => t.task_id === taskId);
@@ -128,47 +153,50 @@ const App: React.FC = () => {
     };
     await updateTask(taskId, updateDto);
     setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, task_status: newStatus } : t));
+    await performSync(syncUpload);
   };
+
+  const closeModal = () => setModalState({ isOpen: false });
 
   if (loading) return <div className="calendar-main">Загрузка...</div>;
 
   return (
-    <div>
-      <div className="calendar-main">
-        <div className="calendar-header">
-          <div className="title-section">
-            <h1>Календарь задач</h1>
-            <span className="semi-hidden-text">таск-менеджер на React</span>
-          </div>
+    <>
+    <div className="calendar-main">
+      <div className="calendar-header">
+        <div className="title-section">
+          <h1>Календарь задач</h1>
+          <span className="semi-hidden-text">таск-менеджер на React</span>
         </div>
-        <CalendarStrip
-          ref={calendarRef}
-          tasks={tasks}
-          onAddTask={handleAddTask}
-          onEditTask={handleEditTask}
-          onMoveTask={handleMoveTask}
-          onLoadRange={loadTasksForRange}
-          onToggleStatus={handleToggleStatus}
-        />
-        <footer>
-          Клик по дню – новая задача, по названию – редактировать.
-        </footer>
-        <TaskModal
-          isOpen={modalState.isOpen}
-          task={modalState.task || undefined}
-          defaultDate={modalState.defaultDate}
-          onSave={handleSaveTask}
-          onDelete={handleDeleteTask}
-          onClose={closeModal}
-        />
       </div>
+      <CalendarStrip
+        ref={calendarRef}
+        tasks={tasks}
+        onAddTask={handleAddTask}
+        onEditTask={handleEditTask}
+        onMoveTask={handleMoveTask}
+        onLoadRange={loadTasksForRange}
+        onToggleStatus={handleToggleStatus}
+      />
       <TaskList
-          tasks={tasks}
-          onTaskClick={handleTaskClickFromList}
-          onToggleStatus={handleToggleStatus}
-        />
+        tasks={tasks}
+        onTaskClick={handleTaskClickFromList}
+        onToggleStatus={handleToggleStatus}
+      />
+      <footer>
+        Клик по дню – новая задача, по названию – редактировать.
+      </footer>
+      <TaskModal
+        isOpen={modalState.isOpen}
+        task={modalState.task || undefined}
+        defaultDate={modalState.defaultDate}
+        onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
+        onClose={closeModal}
+      />
     </div>
-    
+    {syncing && <div className="sync-toast">🔄 Синхронизация с облаком...</div>}
+    </>
   );
 };
 

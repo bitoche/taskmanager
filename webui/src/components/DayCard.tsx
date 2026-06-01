@@ -1,15 +1,18 @@
 import React from 'react';
+import { CheckCircle2, ExternalLink, AlertCircle } from 'lucide-react';
 import { Task } from '../types';
 
 interface Props {
   date: Date;
-  tasks: Task[];
+  tasks: any[]; // задачи с возможным флагом isGhost
   isToday: boolean;
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
   onMoveTask: (taskId: number, newDueDate: string) => void;
   onToggleStatus: (taskId: number, currentStatus: number) => void;
+  onGhostClick?: (dateStr: string) => void;
   dateStr: string;
+  highlightedTaskId?: number | null;
 }
 
 function formatDisplayDate(date: Date): string {
@@ -45,8 +48,9 @@ function getOverdueDays(dueDateStr: string | null | undefined): number {
 }
 
 const DayCard: React.FC<Props> = ({ 
-  date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, dateStr 
+  date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, onGhostClick, dateStr, highlightedTaskId
 }) => {
+  
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.task-item')) return;
     onAddTask();
@@ -80,7 +84,6 @@ const DayCard: React.FC<Props> = ({
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
       window.open(url, '_blank', 'noopener,noreferrer');
     } else if (url) {
-      // Если ссылка не начинается с http, добавляем https://
       window.open('https://' + url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -103,6 +106,24 @@ const DayCard: React.FC<Props> = ({
           <div style={{ textAlign: 'center', color: '#aaa' }}>—</div>
         ) : (
           tasks.map((task) => {
+            if (task.isGhost) {
+              return (
+                <div
+                  key={task.task_id}
+                  className="task-item ghost-task"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGhostClick?.(task.ghostTargetDate);
+                  }}
+                >
+                  <div className="task-title">
+                    <span className="task-title-text">{escapeHtml(task.title)}</span>
+                  </div>
+                </div>
+              );
+            }
+            const isHighlighted = highlightedTaskId === task.task_id;
+
             const overdue = getOverdueDays(task.due_date);
             const isCompleted = task.task_status === 2;
             const isActive = task.task_status === 1;
@@ -110,14 +131,17 @@ const DayCard: React.FC<Props> = ({
 
             let badge = null;
             if (isActive && overdue > 0) {
-              let title_badge = 'Дней просрочки: ' + overdue;
-              badge = <span title={title_badge} className="overdue-badge">{overdue}⟳</span>;
+              badge = (
+                <span title={`Дней просрочки: ${overdue}`} className="overdue-badge">
+                  <AlertCircle size={12} /> {overdue}
+                </span>
+              );
             }
 
             return (
               <div
                 key={task.task_id}
-                className={`task-item ${isCompleted ? 'completed-task' : ''}`}
+                className={`task-item ${isCompleted ? 'completed-task' : ''} ${isHighlighted ? 'task-highlight' : ''}`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.task_id)}
                 onClick={(e) => {
@@ -134,7 +158,10 @@ const DayCard: React.FC<Props> = ({
                       onClick={(e) => handleStatusToggle(e, task.task_id, task.task_status || 1)}
                       title={isCompleted ? "Отметить как невыполненную" : "Отметить как выполненную"}
                     >
-                      {isCompleted ? '✅' : '⬜'}
+                      <CheckCircle2
+                        size={18}
+                        className={isCompleted ? "status-icon completed" : "status-icon incomplete"}
+                      />
                     </button>
                     {hasLink && (
                       <button
@@ -142,7 +169,7 @@ const DayCard: React.FC<Props> = ({
                         onClick={(e) => handleOpenLink(e, task.link_to_taskmanager!)}
                         title="Открыть во внешнем менеджере"
                       >
-                        🔗
+                        <ExternalLink size={16} />
                       </button>
                     )}
                   </div>

@@ -1,4 +1,7 @@
 Flask==2.3.3
 duckdb==1.5.3
 pandas==3.0.3
-pydantic
+pydantic==2.13.4
+requests==2.34.2
+python-dotenv==1.2.2
+yadisk==3.4.1

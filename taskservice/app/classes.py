@@ -25,6 +25,7 @@ class Task:
     description: str = None
     link_to_taskmanager: str = None
     due_date: Date = None
+    closed_dttm: DateTime = None
     created_at: DateTime = None
     task_status: int = None
     _nullables: ClassVar[dict] = {
@@ -56,6 +57,7 @@ class UpdateTaskDTO(BaseModel):
     description: Optional[str] = None
     link_to_taskmanager: Optional[str] = None
     due_date: str = None
+    closed_date: Optional[str] = None
     task_status: Optional[int] = None
 
 @dataclass

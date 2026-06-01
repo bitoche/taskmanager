@@ -2,7 +2,7 @@ services:
   taskservice:
     build: ./taskservice
     container_name: taskservice
-    command: sh -c "python -m app.api 2>&1 | tee /app/logs/taskservice.log"
+    command: sh -c "python -u -m app.api"
     ports:
       - "8081:5000"
     volumes:
