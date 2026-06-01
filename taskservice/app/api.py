@@ -8,6 +8,7 @@ from flask.json.provider import DefaultJSONProvider
 import numpy as np
 import pandas as pd
 import math
+from .src import remote_files_handler
 
 app = Flask(__name__)
 init_db()
@@ -103,6 +104,19 @@ def delete_task(task_id):
         return jsonify({"status": "deleted"})
     else:
         return jsonify({'status': 'not deleted'})
+
+
+@app.route('/api/remote_db/sync_download')
+def download_updated_tasks_db():
+    remotes = remote_files_handler.RemoteFilesHandler()
+    res = remotes.download_file()
+    return jsonify({'status': res})
+
+@app.route('/api/remote_db/sync_upload')
+def upload_updated_tasks_db():
+    remotes = remote_files_handler.RemoteFilesHandler()
+    res = remotes.upload_file()
+    return jsonify({'status': res})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

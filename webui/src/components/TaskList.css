@@ -1,0 +1,277 @@
+.task-list-container {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.task-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.task-list-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1e2a3a;
+}
+
+.task-list-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.4rem 1rem;
+  border-radius: 40px;
+  border: 1px solid #cbd5e1;
+}
+
+.task-list-search input {
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  width: 220px;
+}
+
+.task-list-table-wrapper {
+  overflow-x: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;          /* Ограничиваем высоту, включаем вертикальный скролл */
+  scrollbar-width: thin;      /* Тонкий скроллбар (для Firefox) */
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Для WebKit (Chrome, Safari) – стилизация скроллбара */
+.task-list-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.task-list-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.task-list-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.task-list-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ограничиваем максимальную ширину всего компонента списка */
+.task-list-container {
+  max-width: 100%;            /* или можно конкретное значение, например 1200px */
+  width: 100%;
+  overflow: hidden;           /* чтобы ничего не вылезало за границы */
+}
+
+.task-list-table {
+  min-width: 650px; /* сумма ваших базовых ширин */
+}
+
+.task-list-table {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 600px;
+  width: 100% !important; 
+}
+
+.task-list-table th {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  background: #eef2f8;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  border-radius: 12px;
+  position: relative;
+}
+
+.task-list-table th.sortable:hover {
+  background: #e2e8f0;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.resizer:hover,
+.resizer.isResizing {
+  opacity: 1;
+  background: #3b82f6;
+}
+
+.task-list-table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #cbd5e1;
+  cursor: pointer;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.task-row:hover {
+  background: #f1f5f9;
+}
+
+.task-row.completed-row {
+  opacity: 0.7;
+  background: #e9ecef;
+}
+
+.task-title-cell {
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-date-cell {
+  white-space: nowrap;
+}
+
+.overdue-badge-list {
+  background: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-status-cell {
+  white-space: nowrap;
+}
+
+.task-action-cell {
+  text-align: center;
+}
+
+.status-toggle-btn-list {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 20px;
+  transition: background 0.1s;
+}
+
+.status-toggle-btn-list:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.status-icon.completed {
+  color: #10b981;
+  fill: #10b981;
+}
+
+.status-icon.incomplete {
+  color: #9ca3af;
+}
+
+.no-tasks {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background: #eef2f8;
+  z-index: 10;
+}
+
+
+/* Основной стиль элемента задачи */
+.task-highlight {
+  position: relative;
+  overflow: hidden;
+  background-color: #ffdaaa !important;
+  border-radius: 20px;
+}
+
+/* Бегущие полоски */
+.task-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Диагональный градиент с чётким периодом (70px) */
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0) 0px,
+    rgba(255, 255, 255, 0) 25px,
+    rgba(255, 255, 255, 0.4) 25px,   /* чуть прозрачнее для мягкости */
+    rgba(255, 255, 255, 0.4) 45px,
+    rgba(255, 255, 255, 0) 45px,
+    rgba(255, 255, 255, 0) 70px
+  );
+  background-size: 70px 70px;         /* точно один период градиента */
+  background-repeat: repeat;          /* зацикливание */
+  animation: stripesMove 1s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  /* Плавное появление/исчезновение (если класс добавляется/удаляется) */
+  opacity: 0;                         /* на старте невидим */
+  transition: opacity 0.2s ease;      /* плавное появление/исчезновение */
+}
+
+/* Когда класс активен — показываем полоски */
+.task-highlight::before {
+  opacity: 1;                         /* этот селектор такой же, но переопределяем opacity */
+}
+/* Более правильно: при наличии класса .task-highlight у родителя */
+.task-highlight::before {
+  opacity: 1;
+}
+/* Если класс добавляется динамически, transition сработает */
+
+/* Анимация движения — сдвиг ровно на один период */
+@keyframes stripesMove {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 70px 70px;   /* сдвиг по диагонали на период */
+  }
+}
+
+/* Текст поверх полосок */
+.task-highlight > * {
+  position: relative;
+  z-index: 2;
+}

@@ -5,6 +5,7 @@ from .classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
 def get_all_tasks() -> pd.DataFrame:
     with get_db() as conn:
         df = conn.sql(f'SELECT * FROM "tasks" ORDER BY due_date, task_id;').df()
+        print(df)
     return _df_to_list_of_obj(df, Task)
 
 def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataFrame:
@@ -15,6 +16,7 @@ def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataF
             AND '{date_from_iso}'::date <= due_date
             ORDER BY due_date, task_id;
         """).df()
+        df.fillna(None, inplace=True)
     return _df_to_list_of_obj(df, Task)
 
 def get_task_by_id(task_id):

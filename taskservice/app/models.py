@@ -2,6 +2,7 @@ import duckdb
 from pathlib import Path
 from .config import config 
 from .classes import *
+from .src import remote_files_handler
 # Файл БД будет в корне taskservice (рядом с Dockerfile)
 DB_PATH = config.DB_PATH
 
@@ -41,7 +42,25 @@ INSERT INTO task_status (status_name) VALUES
     ('completed')
 ON CONFLICT DO NOTHING;
 """
-
+    
+    remote = remote_files_handler.RemoteFilesHandler()
     with get_db() as conn:
         print(sql_script)   # опционально, для отладки
         conn.execute(sql_script)
+    with get_db() as conn:
+        current_structure_tasks = conn.sql(f'select * from tasks limit 0;').df().columns.to_list()
+        in_code_structure_tasks = conn.sql(f'create temp table temp_tasks_curr ({tasks_columns_sql}); select * from temp_tasks_curr limit 0;').df().columns.to_list()
+        migrate = set(current_structure_tasks).issubset(set(in_code_structure_tasks))
+        if migrate:    
+            new_cols = list(set(in_code_structure_tasks).difference(current_structure_tasks))
+            print(f'new tasks cols: {new_cols}')
+            for col in tasks_columns:
+                col = col.replace(' NOT NULL', '')
+                alt = f'ALTER TABLE tasks ADD COLUMN IF NOT EXISTS {col};'
+                print(alt)
+                conn.execute(alt)
+            print(f"new struct: {conn.sql(f'select * from tasks limit 0;').df().columns.to_list()}")
+            print(f"status update on remote: {remote.upload_file()}")
+        
+    
+    
