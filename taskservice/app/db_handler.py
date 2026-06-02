@@ -3,12 +3,14 @@ from .models import get_db
 from .classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
 
 def get_all_tasks() -> pd.DataFrame:
+    print('get all')
     with get_db() as conn:
         df = conn.sql(f'SELECT * FROM "tasks" ORDER BY due_date, task_id;').df()
         print(df)
     return _df_to_list_of_obj(df, Task)
 
 def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataFrame:
+    print(f'get bw {date_from_iso} {date_to_iso}')
     with get_db() as conn:
         df = conn.sql(f"""
             SELECT * FROM "tasks"
@@ -20,6 +22,7 @@ def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataF
     return _df_to_list_of_obj(df, Task)
 
 def get_task_by_id(task_id):
+    print(f'get by id {task_id}')
     assert task_id is not None
     with get_db() as conn:
         df = conn.sql(f'SELECT * FROM "tasks" where task_id = {task_id};').df()

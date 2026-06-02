@@ -57,10 +57,9 @@ def get_task_by_id(task_id):
 def list_tasks_bw():
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
-    if date_from and date_to:
-        tasks = db_handler.get_all_tasks_between_dates(date_from, date_to)
-    else:
-        tasks = db_handler.get_all_tasks()
+    if not date_from or not date_to:
+        return jsonify({"error": "Missing date_from or date_to"}), 400
+    tasks = db_handler.get_all_tasks_between_dates(date_from, date_to)
     return jsonify(tasks)
 
 @app.route('/api/tasks', methods=['POST'])
