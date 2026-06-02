@@ -45,6 +45,8 @@ interface Props {
 }
 export interface CalendarStripRef {
   scrollToDate: (dateStr: string, taskId?: number) => void;
+  scrollLeft: () => void;
+  scrollRight: () => void;
 }
 
 const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
@@ -269,7 +271,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
     if (targetCard) {
       stripRef.current.scrollTo({
-        left: Math.max(0, targetCard.offsetLeft - 24),
+        left: Math.max(0, targetCard.offsetLeft - 46),
         behavior: 'smooth',
       });
     }
@@ -330,7 +332,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
       if (targetCard) {
         stripRef.current.scrollTo({
-          left: Math.max(0, targetCard.offsetLeft - 24),
+          left: Math.max(0, targetCard.offsetLeft - 46),
           behavior: 'smooth',
         });
         if (taskId !== undefined) {
@@ -342,17 +344,23 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
         }
       }
     },
+    scrollLeft: () => {
+      if (stripRef.current) stripRef.current.scrollLeft -= 280;
+    },
+    scrollRight: () => {
+      if (stripRef.current) stripRef.current.scrollLeft += 280;
+    },
   }));
 
   return (
     <>
-      <div className="calendar-header" style={{ justifyContent: 'space-between' }}>
+      {/* <div className="calendar-header" style={{ justifyContent: 'space-between' }}>
         <div />
         <div className="nav-buttons">
           <button className="nav-btn" onClick={() => stripRef.current && (stripRef.current.scrollLeft -= 280)}>⬅️</button>
           <button className="nav-btn" onClick={() => stripRef.current && (stripRef.current.scrollLeft += 280)}>➡️</button>
         </div>
-      </div>
+      </div> */}
       <div className="strip-wrapper">
         <div className="calendar-strip" ref={stripRef}>
           {dates.map((date) => {

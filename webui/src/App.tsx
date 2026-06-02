@@ -4,6 +4,7 @@ import { Task, CreateTaskDTO, UpdateTaskDTO } from './types';
 import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
 import TaskModal from './components/TaskModal';
 import TaskList from './components/TaskList';
+import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
 
 const App: React.FC = () => {
   const calendarRef = useRef<CalendarStripRef>(null);
@@ -50,6 +51,11 @@ const App: React.FC = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+  const scrollToToday = () => {
+    const today = new Date();
+    const todayStr = formatLocalDate(today);
+    calendarRef.current?.scrollToDate(todayStr);
+  };
 
   // Загрузка при старте + синхронизация (скачивание)
   useEffect(() => {
@@ -94,6 +100,7 @@ const App: React.FC = () => {
       };
       await updateTask(modalState.task.task_id, updateDto);
       setTasks(prev => prev.map(t => t.task_id === modalState.task!.task_id ? { ...t, ...taskData } : t));
+      setModalState({ isOpen: false });
       await performSync(syncUpload);
     } else {
       const createDto: CreateTaskDTO = {
@@ -110,17 +117,21 @@ const App: React.FC = () => {
       const to = new Date(today);
       to.setDate(today.getDate() + 30);
       await loadTasksForRange(formatLocalDate(from), formatLocalDate(to));
+      setModalState({ isOpen: false });
       await performSync(syncUpload);
     }
     setModalState({ isOpen: false });
   };
 
-  const handleDeleteTask = async () => {
-    if (modalState.task) {
-      await deleteTask(modalState.task.task_id);
-      setTasks(prev => prev.filter(t => t.task_id !== modalState.task!.task_id));
+  const handleDeleteTask = async (taskId: number) => {
+    if (window.confirm('Удалить задачу?')) {
+      await deleteTask(taskId);
+      setTasks(prev => prev.filter(t => t.task_id !== taskId));
+      // Если открыта модалка именно с этой задачей — закрываем её
+      if (modalState.task?.task_id === taskId) {
+        setModalState({ isOpen: false });
+      }
       await performSync(syncUpload);
-      setModalState({ isOpen: false });
     }
   };
 
@@ -166,7 +177,15 @@ const App: React.FC = () => {
       <div className="calendar-header">
         <div className="title-section">
           <h1>Календарь задач</h1>
-          <span className="semi-hidden-text">таск-менеджер на React</span>
+          {/* <span className="semi-hidden-text">таск-менеджер на React</span> */}
+        </div>
+        <div className="nav-buttons">
+          <button className="nav-btn" onClick={() => calendarRef.current?.scrollLeft()}>
+            <ChevronLeft size={20} />
+          </button>
+          <button className="nav-btn" onClick={() => calendarRef.current?.scrollRight()}>
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
       <CalendarStrip
@@ -182,6 +201,8 @@ const App: React.FC = () => {
         tasks={tasks}
         onTaskClick={handleTaskClickFromList}
         onToggleStatus={handleToggleStatus}
+        onEditTask={handleEditTask}
+        onDeleteTask={(task) => handleDeleteTask(task.task_id)}
       />
       <footer>
         Клик по дню – новая задача, по названию – редактировать.
@@ -191,10 +212,19 @@ const App: React.FC = () => {
         task={modalState.task || undefined}
         defaultDate={modalState.defaultDate}
         onSave={handleSaveTask}
-        onDelete={handleDeleteTask}
+        onDelete={() => {
+          if (modalState.task) handleDeleteTask(modalState.task.task_id);
+        }}
         onClose={closeModal}
       />
     </div>
+    <button
+      className="today-btn-fixed"
+      onClick={scrollToToday}
+      title="Перейти к сегодняшнему дню"
+    >
+      <Home size={20} />
+    </button>
     {syncing && <div className="sync-toast">🔄 Синхронизация с облаком...</div>}
     </>
   );

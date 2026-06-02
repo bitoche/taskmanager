@@ -89,6 +89,15 @@ const DayCard: React.FC<Props> = ({
   };
 
   return (
+    <>
+    { formatWeekday(date) === 'Пн' ? (
+      <>
+        <br/>
+        {/* <p stype={{transform: rotate(-90deg); white-space: nowrap; height: max-content; display: inline-flex; justify-content: center;}}>текст</p> */}
+        <br/>
+      </>
+    ) : (null)
+    }
     <div
       className={`day-card ${isToday ? 'today-card' : ''}`}
       onDragOver={handleDragOver}
@@ -180,6 +189,7 @@ const DayCard: React.FC<Props> = ({
         )}
       </div>
     </div>
+    </>
   );
 };
 

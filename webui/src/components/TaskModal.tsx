@@ -6,7 +6,7 @@ interface Props {
   task?: Task;
   defaultDate?: string;
   onSave: (taskData: Omit<Task, 'task_id'>) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onDelete: () => void;
   onClose: () => void;
 }
 

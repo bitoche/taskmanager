@@ -10,21 +10,26 @@ import {
   SortingState,
   flexRender,
 } from '@tanstack/react-table';
-import { CheckCircle2, AlertCircle, Search } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Search, Edit, Trash2 } from 'lucide-react';
 import './TaskList.css';
 
 interface Props {
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   onToggleStatus: (taskId: number, newStatus: number) => void;
+  onEditTask: (task: Task) => void;      // новый проп
+  onDeleteTask: (task: Task) => void;    // новый проп
 }
 
-const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
+const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditTask, onDeleteTask }) => {
   const [globalFilter, setGlobalFilter] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'due_date', desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>(
+    [
+      { id: 'task_status', desc: false },
+      { id: 'due_date', desc: false }
+    ]);
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
 
-  // Вычисление просрочки и статуса для каждой задачи
   const data = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -41,7 +46,6 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
     });
   }, [tasks]);
 
-  // Определение колонок
   const columns = useMemo<ColumnDef<Task & { isCompleted: boolean; overdue: number }>[]>(
     () => [
       {
@@ -68,7 +72,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
               {dueDate || '—'}
               {overdue > 0 && (
                 <span className="overdue-badge-list">
-                  <AlertCircle size={12} /> просрочка {overdue} дн.
+                  <AlertCircle size={12} /> опоздание на {overdue} дн.
                 </span>
               )}
             </div>
@@ -91,13 +95,13 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
       {
         id: 'actions',
         header: '',
-        size: 40,
+        size: 140,          // чуть больше, чтобы вместить три кнопки
         enableSorting: false,
         cell: info => {
           const task = info.row.original;
           const isCompleted = task.isCompleted;
           return (
-            <div className="task-action-cell">
+            <div className="task-actions-group">
               <button
                 className="status-toggle-btn-list"
                 onClick={(e) => {
@@ -112,12 +116,32 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
                   className={isCompleted ? 'status-icon completed' : 'status-icon incomplete'}
                 />
               </button>
+              <button
+                className="edit-btn-list"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditTask(task);
+                }}
+                title="Редактировать задачу"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                className="delete-btn-list"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteTask(task);
+                }}
+                title="Удалить задачу"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           );
         },
-      },
+      }
     ],
-    [onToggleStatus]
+    [onToggleStatus, onEditTask, onDeleteTask]
   );
 
   const table = useReactTable({
@@ -133,7 +157,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     columnResizeMode,
-    enableMultiSort: true,   // мультисортировка (Shift+клик)
+    enableMultiSort: true,
     enableSorting: true,
   });
 
@@ -155,9 +179,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
       <div className="task-list-table-wrapper">
         <table
           className="task-list-table"
-          style={{
-            width: table.getTotalSize(),
-          }}
+          style={{ width: table.getTotalSize() }}
         >
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
@@ -166,10 +188,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    style={{
-                      width: header.getSize(),
-                      position: 'relative',
-                    }}
+                    style={{ width: header.getSize(), position: 'relative' }}
                     onClick={header.column.getToggleSortingHandler()}
                     className={header.column.getCanSort() ? 'sortable' : ''}
                   >
@@ -180,7 +199,6 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
                         desc: ' ↓',
                       }[header.column.getIsSorted() as string] ?? ' ↕'}
                     </div>
-                    {/* Ресайзер */}
                     <div
                       onMouseDown={header.getResizeHandler()}
                       onTouchStart={header.getResizeHandler()}
@@ -206,12 +224,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus }) => {
                   onClick={() => onTaskClick(row.original)}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
-                      style={{
-                        width: cell.column.getSize(),
-                      }}
-                    >
+                    <td key={cell.id} style={{ width: cell.column.getSize() }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

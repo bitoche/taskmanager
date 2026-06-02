@@ -143,7 +143,7 @@
 
 .task-row.completed-row {
   opacity: 0.7;
-  background: #e9ecef;
+  background: #effff3;
 }
 
 .task-title-cell {
@@ -175,6 +175,16 @@
 
 .task-action-cell {
   text-align: center;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.task-actions-group {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
 }
 
 .status-toggle-btn-list {
@@ -197,6 +207,28 @@
 
 .status-icon.incomplete {
   color: #9ca3af;
+}
+
+.edit-btn-list,
+.delete-btn-list {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 20px;
+  transition: background 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a5568;
+}
+.edit-btn-list:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #3182ce;
+}
+.delete-btn-list:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
 }
 
 .no-tasks {
@@ -275,3 +307,4 @@
   position: relative;
   z-index: 2;
 }
+
