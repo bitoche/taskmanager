@@ -10,24 +10,23 @@ import {
   SortingState,
   flexRender,
 } from '@tanstack/react-table';
-import { CheckCircle2, AlertCircle, Search, Edit, Trash2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Search, Edit, Trash2, ExternalLink } from 'lucide-react';
 import './TaskList.css';
 
 interface Props {
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   onToggleStatus: (taskId: number, newStatus: number) => void;
-  onEditTask: (task: Task) => void;      // новый проп
-  onDeleteTask: (task: Task) => void;    // новый проп
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
 }
 
 const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditTask, onDeleteTask }) => {
   const [globalFilter, setGlobalFilter] = useState('');
-  const [sorting, setSorting] = useState<SortingState>(
-    [
-      { id: 'task_status', desc: false },
-      { id: 'due_date', desc: false }
-    ]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'task_status', desc: false },
+    { id: 'due_date', desc: false },
+  ]);
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
 
   const data = useMemo(() => {
@@ -54,21 +53,36 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
         size: 300,
         minSize: 150,
         cell: info => (
-          <div className="task-title-cell" title={info.getValue() as string}>
+          <div className="task-title-cell" title={info.row.original.description || 'Нет описания'}>
             {info.getValue() as string}
           </div>
         ),
       },
       {
+        accessorKey: 'created_at',
+        header: 'Дата создания',
+        size: 120,
+        minSize: 100,
+        cell: info => {
+          const createdAt = info.getValue() as string | null;
+          const formatted = createdAt ? new Date(createdAt).toLocaleDateString('ru-RU') : '—';
+          return (
+            <div className="task-created-cell" title={info.row.original.description || 'Нет описания'}>
+              {formatted}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'due_date',
-        header: 'Дата',
+        header: 'Планируемая дата',
         size: 150,
         minSize: 100,
         cell: info => {
           const dueDate = info.getValue() as string | null;
           const overdue = info.row.original.overdue;
           return (
-            <div className="task-date-cell">
+            <div className="task-date-cell" title={info.row.original.description || 'Нет описания'}>
               {dueDate || '—'}
               {overdue > 0 && (
                 <span className="overdue-badge-list">
@@ -80,13 +94,37 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
         },
       },
       {
+        id: 'link',
+        header: 'Ссылка',
+        size: 60,
+        enableSorting: false,
+        enableResizing: false,
+        cell: info => {
+          const link = info.row.original.link_to_taskmanager;
+          if (!link) return null;
+          return (
+            <div className="task-link-cell">
+              <a
+                href={link.startsWith('http') ? link : `https://${link}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Открыть во внешнем менеджере"
+              >
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'task_status',
         header: 'Статус',
         size: 120,
         cell: info => {
           const isCompleted = info.row.original.isCompleted;
           return (
-            <div className="task-status-cell">
+            <div className="task-status-cell" title={info.row.original.description || 'Нет описания'}>
               {isCompleted ? '✅ Выполнена' : '🟢 Активна'}
             </div>
           );
@@ -95,8 +133,9 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
       {
         id: 'actions',
         header: '',
-        size: 140,          // чуть больше, чтобы вместить три кнопки
+        size: 120,
         enableSorting: false,
+        enableResizing: false,
         cell: info => {
           const task = info.row.original;
           const isCompleted = task.isCompleted;
@@ -139,7 +178,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
             </div>
           );
         },
-      }
+      },
     ],
     [onToggleStatus, onEditTask, onDeleteTask]
   );
@@ -177,10 +216,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
       </div>
 
       <div className="task-list-table-wrapper">
-        <table
-          className="task-list-table"
-          style={{ width: table.getTotalSize() }}
-        >
+        <table className="task-list-table" style={{ width: table.getTotalSize() }}>
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
@@ -189,15 +225,19 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize(), position: 'relative' }}
-                    onClick={header.column.getToggleSortingHandler()}
+                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                     className={header.column.getCanSort() ? 'sortable' : ''}
                   >
                     <div className="th-content">
                       {flexRender(header.column.columnDef.header, header.getContext())}
-                      {{
-                        asc: ' ↑',
-                        desc: ' ↓',
-                      }[header.column.getIsSorted() as string] ?? ' ↕'}
+                      {header.column.getCanSort() && (
+                        <span className="sort-indicator">
+                          {{
+                            asc: ' ↑',
+                            desc: ' ↓',
+                          }[header.column.getIsSorted() as string] ?? ' ↕'}
+                        </span>
+                      )}
                     </div>
                     <div
                       onMouseDown={header.getResizeHandler()}
@@ -212,9 +252,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
           <tbody>
             {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="no-tasks">
-                  Задачи не найдены
-                </td>
+                <td colSpan={columns.length} className="no-tasks">Задачи не найдены</td>
               </tr>
             ) : (
               table.getRowModel().rows.map(row => (
