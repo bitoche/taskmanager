@@ -1,4 +1,4 @@
-import /* React, */ {
+import /*React,*/ {
   useRef,
   useEffect,
   useState,
@@ -11,10 +11,9 @@ import DayCard from './DayCard';
 import { Task } from '../types';
 import './CalendarStrip.css';
 
-const INITIAL_DAYS_BEFORE = 7;
-const INITIAL_DAYS_AFTER = 7;
-const SCROLL_THRESHOLD = 200;
-const LOAD_MORE_DAYS = 7;
+const INITIAL_DAYS_BEFORE = 7;      // дней до сегодня
+const INITIAL_DAYS_AFTER = 23;      // дней после сегодня (всего 30)
+const LOAD_MORE_DAYS = 30;          // сколько дней подгружать за раз
 
 function getTodayDate(): Date {
   const d = new Date();
@@ -43,6 +42,7 @@ interface Props {
   onLoadRange: (from: string, to: string) => Promise<Task[]>;
   onToggleStatus: (taskId: number, newStatus: number) => void;
 }
+
 export interface CalendarStripRef {
   scrollToDate: (dateStr: string, taskId?: number) => void;
   scrollLeft: () => void;
@@ -60,32 +60,29 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   const [dates, setDates] = useState<Date[]>([]);
   const [loadedDateKeys, setLoadedDateKeys] = useState<Set<string>>(new Set());
   const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
+  const [loadingLeft, setLoadingLeft] = useState(false);
+  const [loadingRight, setLoadingRight] = useState(false);
   
   const stripRef = useRef<HTMLDivElement>(null);
   const datesRef = useRef<Date[]>([]);
 
-  const isLoadingLeft = useRef(false);
-  const isLoadingRight = useRef(false);
   const initialized = useRef(false);
-  const lastLeftLoadTime = useRef(0);
-  const initialAutoScrollLock = useRef(true);
 
   const todayStr = formatLocalDate(getTodayDate());
-
 
   useEffect(() => {
     datesRef.current = dates;
   }, [dates]);
 
   // =========================
-  // INITIAL LOAD
+  // INITIAL LOAD (30 дней)
   // =========================
   useEffect(() => {
     if (initialized.current) return;
 
     const today = getTodayDate();
     const start = addDays(today, -INITIAL_DAYS_BEFORE);
-    const end = addDays(today, INITIAL_DAYS_BEFORE + INITIAL_DAYS_AFTER);
+    const end = addDays(today, INITIAL_DAYS_AFTER);
 
     const newDates: Date[] = [];
     let cur = new Date(start);
@@ -101,7 +98,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     initialized.current = true;
   }, [onLoadRange]);
 
-  // Плавная прокрутка к сегодняшнему дню
+  // Прокрутка к сегодняшнему дню (после загрузки данных)
   useEffect(() => {
     if (dates.length === 0 || !stripRef.current) return;
 
@@ -109,28 +106,23 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     const todayCard = strip.querySelector(`[data-date="${todayStr}"]`) as HTMLElement | null;
     if (!todayCard) return;
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        strip.scrollTo({
-          left: Math.max(0, todayCard.offsetLeft - 46),
-          behavior: 'smooth',
-        });
-        setTimeout(() => {
-          initialAutoScrollLock.current = false;
-        }, 700);
+    // Даём время на рендер и применяем прокрутку
+    setTimeout(() => {
+      strip.scrollTo({
+        left: Math.max(0, todayCard.offsetLeft - 46),
+        behavior: 'smooth',
       });
-    });
+    }, 100);
   }, [dates, todayStr]);
 
   // =========================
   // LOAD LEFT
   // =========================
-  const loadMoreLeft = useCallback(async () => {
-    const currentDates = datesRef.current;
-    if (isLoadingLeft.current || currentDates.length === 0) return;
-    isLoadingLeft.current = true;
-
-    const firstDate = currentDates[0];
+  const handleLoadLeft = useCallback(async () => {
+    if (loadingLeft || dates.length === 0) return;
+    setLoadingLeft(true);
+    
+    const firstDate = dates[0];
     const newFirst = addDays(firstDate, -LOAD_MORE_DAYS);
     const newDates: Date[] = [];
     let cur = new Date(newFirst);
@@ -139,7 +131,12 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       cur = addDays(cur, 1);
     }
 
+    const oldScrollLeft = stripRef.current?.scrollLeft || 0;
+    const cardWidth = 256;
+    const addedWidth = newDates.length * cardWidth;
+
     setDates((prev) => [...newDates, ...prev]);
+    
     setLoadedDateKeys((prev) => {
       const next = new Set(prev);
       newDates.forEach((d) => next.add(formatLocalDate(d)));
@@ -151,20 +148,20 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     await onLoadRange(fromKey, toKey);
 
     if (stripRef.current) {
-      stripRef.current.scrollLeft = SCROLL_THRESHOLD + 20;
+      stripRef.current.scrollLeft = oldScrollLeft + addedWidth;
     }
-    isLoadingLeft.current = false;
-  }, [onLoadRange]);
+    
+    setLoadingLeft(false);
+  }, [dates, onLoadRange, loadingLeft]);
 
   // =========================
   // LOAD RIGHT
   // =========================
-  const loadMoreRight = useCallback(async () => {
-    const currentDates = datesRef.current;
-    if (isLoadingRight.current || currentDates.length === 0) return;
-    isLoadingRight.current = true;
-
-    const lastDate = currentDates[currentDates.length - 1];
+  const handleLoadRight = useCallback(async () => {
+    if (loadingRight || dates.length === 0) return;
+    setLoadingRight(true);
+    
+    const lastDate = dates[dates.length - 1];
     const newLast = addDays(lastDate, LOAD_MORE_DAYS);
     const newDates: Date[] = [];
     let cur = addDays(lastDate, 1);
@@ -174,6 +171,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     }
 
     setDates((prev) => [...prev, ...newDates]);
+    
     setLoadedDateKeys((prev) => {
       const next = new Set(prev);
       newDates.forEach((d) => next.add(formatLocalDate(d)));
@@ -183,36 +181,9 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     const fromKey = formatLocalDate(addDays(lastDate, 1));
     const toKey = formatLocalDate(newLast);
     await onLoadRange(fromKey, toKey);
-
-    isLoadingRight.current = false;
-  }, [onLoadRange]);
-
-  // =========================
-  // SCROLL HANDLER
-  // =========================
-  useEffect(() => {
-    const strip = stripRef.current;
-    if (!strip) return;
-
-    const handleScroll = () => {
-      if (initialAutoScrollLock.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = strip;
-      if (scrollWidth <= clientWidth) return;
-      const now = Date.now();
-
-      if (!isLoadingLeft.current && scrollLeft <= SCROLL_THRESHOLD && now - lastLeftLoadTime.current > 300) {
-        lastLeftLoadTime.current = now;
-        loadMoreLeft();
-        return;
-      }
-      if (!isLoadingRight.current && scrollLeft + clientWidth >= scrollWidth - SCROLL_THRESHOLD) {
-        loadMoreRight();
-      }
-    };
-
-    strip.addEventListener('scroll', handleScroll);
-    return () => strip.removeEventListener('scroll', handleScroll);
-  }, [loadMoreLeft, loadMoreRight]);
+    
+    setLoadingRight(false);
+  }, [dates, onLoadRange, loadingRight]);
 
   // =========================
   // DRAG SCROLL + WHEEL
@@ -280,8 +251,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   // =========================
   // TASK GROUPING
   // =========================
-  // Группировка задач с созданием призраков
-  const groupTasksByDate = (): Map<string, any[]> => { // используем any[] для упрощения, можно определить расширенный тип
+  const groupTasksByDate = (): Map<string, any[]> => {
     const map = new Map<string, any[]>();
     const today = getTodayDate();
     const todayKey = formatLocalDate(today);
@@ -299,22 +269,19 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
         isOverdue = dueDateObj < today;
       }
       
-      // Основная дата отображения (сегодня, если просрочена и активна, иначе due_date)
       const targetKey = (isActive && isOverdue) ? todayKey : originalKey;
       
-      // Добавляем основную задачу (не призрак)
       if (loadedDateKeys.has(targetKey) || targetKey === '') {
         if (!map.has(targetKey)) map.set(targetKey, []);
         map.get(targetKey)!.push({ ...task, isGhost: false });
       }
       
-      // Если задача активна, просрочена и имеет оригинальную дату, отличную от todayKey – создаём призрака в originalKey
       if (isActive && isOverdue && originalKey && originalKey !== targetKey && loadedDateKeys.has(originalKey)) {
         if (!map.has(originalKey)) map.set(originalKey, []);
         map.get(originalKey)!.push({
           ...task,
           isGhost: true,
-          ghostTargetDate: targetKey, // куда прокрутить при клике (сегодняшний день)
+          ghostTargetDate: targetKey,
         });
       }
     }
@@ -324,7 +291,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   const taskMap = groupTasksByDate();
 
   // =========================
-  // EXPOSE METHOD TO PARENT
+  // EXPOSE METHODS
   // =========================
   useImperativeHandle(ref, () => ({
     scrollToDate: (dateStr: string, taskId?: number) => {
@@ -336,7 +303,6 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
           behavior: 'smooth',
         });
         if (taskId !== undefined) {
-          // Даём время на прокрутку
           setTimeout(() => {
             setHighlightedTaskId(taskId);
             setTimeout(() => setHighlightedTaskId(null), 2000);
@@ -354,15 +320,21 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
 
   return (
     <>
-      {/* <div className="calendar-header" style={{ justifyContent: 'space-between' }}>
-        <div />
-        <div className="nav-buttons">
-          <button className="nav-btn" onClick={() => stripRef.current && (stripRef.current.scrollLeft -= 280)}>⬅️</button>
-          <button className="nav-btn" onClick={() => stripRef.current && (stripRef.current.scrollLeft += 280)}>➡️</button>
-        </div>
-      </div> */}
       <div className="strip-wrapper">
         <div className="calendar-strip" ref={stripRef}>
+          <div 
+            className={`load-more-card ${loadingLeft ? 'loading' : ''}`}
+            onClick={!loadingLeft ? handleLoadLeft : undefined}
+          >
+            {loadingLeft ? (
+              <div className="spinner">⏳</div>
+            ) : (
+              <>
+                <div className="load-more-icon">◀</div>
+                <div className="load-more-text">Загрузить ранее</div>
+              </>
+            )}
+          </div>
           {dates.map((date) => {
             const dateStr = formatLocalDate(date);
             const tasksForDay = [...(taskMap.get(dateStr) || [])];
@@ -382,6 +354,19 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
               />
             );
           })}
+          <div 
+            className={`load-more-card ${loadingRight ? 'loading' : ''}`}
+            onClick={!loadingRight ? handleLoadRight : undefined}
+          >
+            {loadingRight ? (
+              <div className="spinner">⏳</div>
+            ) : (
+              <>
+                <div className="load-more-text">Загрузить позже</div>
+                <div className="load-more-icon">▶</div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </>

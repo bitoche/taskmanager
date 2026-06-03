@@ -43,7 +43,7 @@ INSERT INTO task_status (status_name) VALUES
 ON CONFLICT DO NOTHING;
 """
     
-    remote = remote_files_handler.RemoteFilesHandler()
+    # remote = remote_files_handler.RemoteFilesHandler()
     with get_db() as conn:
         print(sql_script)   # опционально, для отладки
         conn.execute(sql_script)
@@ -60,7 +60,7 @@ ON CONFLICT DO NOTHING;
                 print(alt)
                 conn.execute(alt)
             print(f"new struct: {conn.sql(f'select * from tasks limit 0;').df().columns.to_list()}")
-            print(f"status update on remote: {remote.upload_file()}")
+            # print(f"status update on remote: {remote.upload_file()}")
         
     
     

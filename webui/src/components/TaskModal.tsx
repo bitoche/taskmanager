@@ -50,9 +50,9 @@ const TaskModal: React.FC<Props> = ({ isOpen, task, defaultDate, onSave, onDelet
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Удалить задачу?')) {
+    // if (window.confirm('Удалить задачу?')) {
       await onDelete();
-    }
+    // }
   };
 
   if (!isOpen) return null;
