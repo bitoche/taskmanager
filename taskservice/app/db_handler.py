@@ -21,7 +21,7 @@ def get_all_tasks_between_dates(date_from_iso: str, date_to_iso:str) -> pd.DataF
         df.fillna(None, inplace=True)
     return _df_to_list_of_obj(df, Task)
 
-def get_task_by_id(task_id):
+def get_task_by_id(task_id) -> Task:
     print(f'get by id {task_id}')
     assert task_id is not None
     with get_db() as conn:
