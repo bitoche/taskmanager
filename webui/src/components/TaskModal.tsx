@@ -195,7 +195,7 @@ const TaskModal: React.FC<Props> = ({
                     <div className="comment-text">{comment.text}</div>
                     <div className="comment-meta">
                       <span>{new Date(comment.created_at).toLocaleString()}</span>
-                      <button type="button" onClick={() => handleDeleteComment(comment.comment_id)}><Trash2 size={12} /></button>
+                      <button className="danger" type="button" onClick={() => handleDeleteComment(comment.comment_id)}><Trash2 size={12} /></button>
                     </div>
                   </div>
                 ))}
