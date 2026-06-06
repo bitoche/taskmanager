@@ -65,5 +65,5 @@ def update_task_comment(upd_task_comment_dto: UpdateTaskCommentDTO):
 def delete_task_comment(comment_id): # can be safe delete with move to trash, and restore if needed
     assert comment_id is not None
     with get_db() as conn:
-        conn.execute(f'DELETE FROM "task_comment" where task_comment_id = {comment_id};')
+        conn.execute(f'DELETE FROM "task_comment" where comment_id = {comment_id};')
     return True

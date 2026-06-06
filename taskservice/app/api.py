@@ -147,7 +147,7 @@ def delete_task_comment(comment_id):
     task_comment_repository.delete_task_comment(comment_id)
     return jsonify({'status': 'success'})
 
-@app.route('/api/task_tags', method=['POST'])
+@app.route('/api/task_tags', methods=['POST'])
 def create_new_task_tag():
     data = request.get_json()
     if not data:

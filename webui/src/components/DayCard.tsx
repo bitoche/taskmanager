@@ -1,6 +1,7 @@
 import React from 'react';
-import { CheckCircle2, ExternalLink, AlertCircle } from 'lucide-react';
-import { Task } from '../types';
+import { CheckCircle2, ExternalLink, AlertCircle/*, X*/ } from 'lucide-react';
+import { Task, TaskTag } from '../types';
+import TaskTags from './TaskTags';
 
 interface Props {
   date: Date;
@@ -11,8 +12,10 @@ interface Props {
   onMoveTask: (taskId: number, newDueDate: string) => void;
   onToggleStatus: (taskId: number, currentStatus: number) => void;
   onGhostClick?: (dateStr: string) => void;
+  onRemoveTagFromTask?: (taskId: number, tagId: number) => void; // новый проп
   dateStr: string;
   highlightedTaskId?: number | null;
+  taskTagsMap?: Map<number, TaskTag[]>; // карта тегов задачи
 }
 
 function formatDisplayDate(date: Date): string {
@@ -48,7 +51,8 @@ function getOverdueDays(dueDateStr: string | null | undefined): number {
 }
 
 const DayCard: React.FC<Props> = ({ 
-  date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, onGhostClick, dateStr, highlightedTaskId
+  date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, onGhostClick, dateStr, highlightedTaskId,
+  onRemoveTagFromTask, taskTagsMap
 }) => {
   
   const handleCardClick = (e: React.MouseEvent) => {
@@ -89,15 +93,6 @@ const DayCard: React.FC<Props> = ({
   };
 
   return (
-    <>
-    { formatWeekday(date) === 'Пн' ? (
-      <>
-        <br/>
-        {/* <p stype={{transform: rotate(-90deg); white-space: nowrap; height: max-content; display: inline-flex; justify-content: center;}}>текст</p> */}
-        <br/>
-      </>
-    ) : (null)
-    }
     <div
       className={`day-card ${isToday ? 'today-card' : ''}`}
       onDragOver={handleDragOver}
@@ -137,6 +132,7 @@ const DayCard: React.FC<Props> = ({
             const isCompleted = task.task_status === 2;
             const isActive = task.task_status === 1;
             const hasLink = task.link_to_taskmanager && task.link_to_taskmanager.trim() !== '';
+            const taskTags = taskTagsMap?.get(task.task_id) || [];
 
             let badge = null;
             if (isActive && overdue > 0) {
@@ -183,13 +179,16 @@ const DayCard: React.FC<Props> = ({
                     )}
                   </div>
                 </div>
+                {/* Отображение тегов с возможностью удалить тег с задачи */}
+                {taskTags.length > 0 && onRemoveTagFromTask && (
+                  <TaskTags tags={taskTags} onRemove={(tagId) => onRemoveTagFromTask(task.task_id, tagId)} maxVisible={3} />
+                )}
               </div>
             );
           })
         )}
       </div>
     </div>
-    </>
   );
 };
 

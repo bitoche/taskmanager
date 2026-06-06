@@ -1,6 +1,6 @@
 import pandas as pd
 from ...models import get_db
-from ...classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO, TaskView, TaskTagView, TaskCommentView
+from ...classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
 from .task_comment_repository import get_task_comments_by_task_id
 from .task_tag_repository import get_task_tags_by_task_id
 

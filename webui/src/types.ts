@@ -24,3 +24,38 @@ export interface UpdateTaskDTO {
   due_date?: string | null;
   task_status?: number | null;
 }
+
+// Комментарии
+export interface TaskComment {
+  comment_id: number;
+  task_id: number;
+  text: string;
+  created_at: string; // ISO datetime
+}
+
+export interface CreateTaskCommentDTO {
+  task_id: number;
+  text: string;
+}
+
+// Теги
+export interface TaskTag {
+  task_tag_id: number;
+  tag_color: string;   // цвет в HEX или название
+  tag_text: string;
+}
+
+export interface TaskTagXTask {
+  task_tag_id: number;
+  task_id: number;
+}
+
+export interface CreateTaskTagDTO {
+  tag_color: string;
+  tag_text: string;
+}
+
+export interface CreateTaskTagXTaskDTO {
+  task_tag_id: number;
+  task_id: number;
+}

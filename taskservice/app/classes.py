@@ -121,12 +121,10 @@ class TaskTag:
 class TaskTagXTask:
     task_tag_id: int = None
     task_id: int = None
-    _nullables: ClassVar[dict] = {
-        'task_tag_id': 'UNIQUE',
-        'task_id': 'UNIQUE'
-    }
+    _nullables: ClassVar[dict] = {}
     _defaults: ClassVar[dict] = {}
     _sequences: ClassVar[list] = []
+    _primary_key: str = 'task_tag_id, task_id'
 
 class CreateTaskTagDTO(BaseModel):
     tag_color: str
@@ -165,6 +163,8 @@ def get_sql_table(cls: any):
             if default != '':
                 default = f'DEFAULT {default}'
             table_create_attrs.append(f'"{attr}" {convert_class_to_sql_type(attr_type)} {_d["_nullables"].get(attr, "NULL")} {default}')
+        if _d.get('_primary_key') is not None:
+            table_create_attrs.append(f'PRIMARY KEY ({_d.get("_primary_key")})')
         sq = _d.get("_sequences")
         return table_create_attrs, sq
 

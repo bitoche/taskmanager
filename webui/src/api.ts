@@ -1,4 +1,4 @@
-import { Task, CreateTaskDTO, UpdateTaskDTO } from './types';
+import { Task, CreateTaskDTO, UpdateTaskDTO, TaskComment, TaskTag, TaskTagXTask } from './types';
 
 const API_BASE = '/api';
 
@@ -64,4 +64,71 @@ export async function syncDownload(): Promise<void> {
 export async function syncUpload(): Promise<void> {
   const res = await fetch(`${API_BASE}/remote_db/sync_upload`);
   if (!res.ok) throw new Error('Sync upload failed');
+}
+
+// ========== Комментарии ==========
+export async function fetchTaskComments(taskId: number): Promise<TaskComment[]> {
+  const res = await fetch(`${API_BASE}/tasks/${taskId}/comments`);
+  if (!res.ok) throw new Error('Failed to fetch comments');
+  return res.json();
+}
+
+export async function addTaskComment(taskId: number, text: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/tasks/comment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_id: taskId, text }),
+  });
+  if (!res.ok) throw new Error('Failed to add comment');
+}
+
+export async function deleteTaskComment(commentId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/tasks/comment/delete/${commentId}`);
+  if (!res.ok) throw new Error('Failed to delete comment');
+}
+
+// ========== Теги ==========
+export async function fetchAllTags(): Promise<TaskTag[]> {
+  const res = await fetch(`${API_BASE}/task_tags`);
+  if (!res.ok) throw new Error('Failed to fetch tags');
+  return res.json();
+}
+
+export async function fetchTaskTagsXTask(): Promise<TaskTagXTask[]> {
+  const res = await fetch(`${API_BASE}/task_tags/tasks`);
+  if (!res.ok) throw new Error('Failed to fetch tag assignments');
+  return res.json();
+}
+
+export async function createTag(tagText: string, tagColor: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/task_tags`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag_text: tagText, tag_color: tagColor }),
+  });
+  if (!res.ok) throw new Error('Failed to create tag');
+}
+
+export async function assignTagToTask(taskTagId: number, taskId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/task_tags/assign`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_tag_id: taskTagId, task_id: taskId }),
+  });
+  if (!res.ok) throw new Error('Failed to assign tag');
+}
+
+export async function unassignTagFromTask(taskTagId: number, taskId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/task_tags/unassign/${taskTagId}/task/${taskId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to unassign tag');
+}
+
+// ВНИМАНИЕ: следующий эндпоинт должен быть добавлен в бэкенд (app/api.py)
+export async function deleteTagGlobally(taskTagId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/task_tags/${taskTagId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete tag');
 }

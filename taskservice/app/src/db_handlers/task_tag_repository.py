@@ -13,7 +13,7 @@ from ...classes import (
 def get_all_task_tags() -> pd.DataFrame:
     print('get all ttags')
     with get_db() as conn:
-        df = conn.sql(f'SELECT * FROM "task_tag" ORDER BY color, task_tag_id;').df()
+        df = conn.sql(f'SELECT * FROM "task_tag" ORDER BY tag_color, task_tag_id;').df()
         print(df)
     return _df_to_list_of_obj(df, TaskTag)
 def get_all_task_tag_x_task_entries() -> pd.DataFrame:
@@ -77,7 +77,7 @@ def create_new_task_tag(task_tag_dto: CreateTaskTagDTO):
     return res
 
 def create_new_task_tag_x_task(task_tag_x_task_dto: CreateTaskTagXTaskDTO):
-    new_task_tag_x_task = TaskTag(**task_tag_x_task_dto.__dict__)
+    new_task_tag_x_task = TaskTagXTask(**task_tag_x_task_dto.__dict__)
     new_task_tag_x_task_d = {
             k:v 
             for k,v 
@@ -88,7 +88,7 @@ def create_new_task_tag_x_task(task_tag_x_task_dto: CreateTaskTagXTaskDTO):
         }
     with get_db() as conn:
         res = conn.sql(f"""
-            INSERT INTO "task_tag" ({', '.join([f'"{k}"' for k in new_task_tag_x_task_d])}) VALUES
+            INSERT INTO "task_tag_x_task" ({', '.join([f'"{k}"' for k in new_task_tag_x_task_d])}) VALUES
             ({', '.join([f"'{v}'" for v in new_task_tag_x_task_d.values()])});""")
     return res
 

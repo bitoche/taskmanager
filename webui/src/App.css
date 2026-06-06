@@ -350,3 +350,218 @@ footer {
   fill: none;
   stroke-width: 2;
 }
+/* Теги – плашки */
+.task-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.task-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: default;
+  background: #eef2f8;
+  color: #1e293b;
+  position: relative;
+}
+.tag-remove-icon {
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.task-tag:hover .tag-remove-icon {
+  opacity: 1;
+}
+.more-tags {
+  background: #cbd5e1;
+  cursor: help;
+}
+
+/* Менеджер тегов */
+.tag-manager {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.tag-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.add-tag-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #3b82f6;
+}
+.tag-creator {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.tag-creator input:first-child {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+.tag-creator input[type="color"] {
+  width: 40px;
+  height: 32px;
+  border: none;
+}
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-filter-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 40px;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.1s;
+}
+.tag-filter-item.active {
+  background: #3b82f6;
+  color: white;
+}
+.tag-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.tag-delete-icon {
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.tag-filter-item:hover .tag-delete-icon {
+  opacity: 1;
+}
+
+/* модальное окно */
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+}
+.tab-btn.active {
+  color: #3b82f6;
+  border-bottom: 2px solid #3b82f6;
+}
+.tab-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 40px;
+  margin: 4px;
+  font-size: 0.8rem;
+}
+.tag-chip svg {
+  cursor: pointer;
+}
+.secondary-btn {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-selector {
+  margin-top: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  cursor: pointer;
+}
+.tag-option:hover {
+  background: #f1f5f9;
+}
+.new-tag-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.comment-item {
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+.new-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.no-tags, .no-comments {
+  color: #94a3b8;
+  font-style: italic;
+}

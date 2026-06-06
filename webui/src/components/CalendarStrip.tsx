@@ -1,4 +1,4 @@
-import /*React,*/ {
+import {
   useRef,
   useEffect,
   useState,
@@ -8,12 +8,12 @@ import /*React,*/ {
 } from 'react';
 
 import DayCard from './DayCard';
-import { Task } from '../types';
+import { Task, TaskTag } from '../types';
 import './CalendarStrip.css';
 
-const INITIAL_DAYS_BEFORE = 7;      // дней до сегодня
-const INITIAL_DAYS_AFTER = 23;      // дней после сегодня (всего 30)
-const LOAD_MORE_DAYS = 30;          // сколько дней подгружать за раз
+const INITIAL_DAYS_BEFORE = 7;
+const INITIAL_DAYS_AFTER = 23;
+const LOAD_MORE_DAYS = 30;
 
 function getTodayDate(): Date {
   const d = new Date();
@@ -41,6 +41,8 @@ interface Props {
   onMoveTask: (taskId: number, newDueDate: string) => void;
   onLoadRange: (from: string, to: string) => Promise<Task[]>;
   onToggleStatus: (taskId: number, newStatus: number) => void;
+  taskTagsMap?: Map<number, TaskTag[]>;
+  onRemoveTag?: (taskId: number, tagId: number) => void; // только удаление, назначение и создание тегов не используются
 }
 
 export interface CalendarStripRef {
@@ -56,6 +58,9 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   onMoveTask,
   onLoadRange,
   onToggleStatus,
+  taskTagsMap,
+  onRemoveTag,
+  // onAssignTag, allTags, onCreateTag – удалены, т.к. не используются
 }, ref) => {
   const [dates, setDates] = useState<Date[]>([]);
   const [loadedDateKeys, setLoadedDateKeys] = useState<Set<string>>(new Set());
@@ -351,6 +356,8 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
                 onGhostClick={navigateToDate}
                 dateStr={dateStr}
                 highlightedTaskId={highlightedTaskId}
+                taskTagsMap={taskTagsMap}
+                onRemoveTagFromTask={onRemoveTag}
               />
             );
           })}
