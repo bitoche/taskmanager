@@ -101,7 +101,7 @@ def update_task(task_id):
             task_from_db = task_repository.get_task_by_id(task_id) # костыль из-за обработки на беке?: получение текущего closed_dttm из бд
             assert task_from_db is not None, f'task must be saved in database before updating'
             if task_from_db.closed_dttm is None:
-                upd_task_dto.closed_date == datetime.now().date().isoformat()
+                upd_task_dto.closed_date = datetime.now().date().isoformat()
     task_repository.update_task(upd_task_dto)
     return jsonify({"status": 'success'})
     
@@ -137,8 +137,6 @@ def create_comment_to_task(task_id: int):
         return jsonify(e.errors()), 400
     task_comment_repository.insert_task_comment(create_comm_dto)
     return jsonify({'status': 'success'})
-
-@app.route('/api/tasks')
 
 @app.route('/api/task_tags', methods=['GET'])
 def get_all_task_tags():

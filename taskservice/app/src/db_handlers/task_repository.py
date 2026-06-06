@@ -1,11 +1,17 @@
 import pandas as pd
 from ...models import get_db
-from ...classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
+from ...classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO, TaskView, TaskTagView, TaskCommentView
+from .task_comment_repository import get_task_comments_by_task_id
+from .task_tag_repository import get_task_tags_by_task_id
 
 def get_all_tasks() -> pd.DataFrame:
     print('get all')
     with get_db() as conn:
-        df = conn.sql(f'SELECT * FROM "tasks" ORDER BY due_date, task_id;').df()
+        df = conn.sql(f"""
+            SELECT t.* 
+            FROM "tasks" t
+            ORDER BY due_date, task_id;
+        """).df()
         print(df)
     return _df_to_list_of_obj(df, Task)
 

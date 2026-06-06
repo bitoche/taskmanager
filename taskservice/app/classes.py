@@ -180,17 +180,3 @@ def _df_to_list_of_obj(df: pd.DataFrame, cls: Any) -> list[Any]:
         return [cls() for _ in range(len(df))]
     cols = [df[attr] for attr in attribs]
     return [cls(**dict(zip(attribs, row))) for row in zip(*cols)]
-
-@dataclass
-class TaskCommentView(TaskComment):
-    pass
-
-@dataclass
-class TaskTagView(TaskTag):
-    pass
-
-@dataclass
-class TaskView(Task):
-    task_status: str = None
-    task_comments: list[TaskCommentView] = None
-    task_tags: list[TaskTagView] = None
