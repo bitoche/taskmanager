@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from pydantic import ValidationError
 from .models import init_db
-from datetime import date
+from datetime import date, datetime
 from .classes import CreateTaskDTO, UpdateTaskDTO, CreateTaskCommentDTO, CreateTaskTagDTO, CreateTaskTagXTaskDTO
 from .src.db_handlers import task_repository, task_tag_repository, task_comment_repository
 from flask.json.provider import DefaultJSONProvider
@@ -93,6 +93,15 @@ def update_task(task_id):
             upd_task_dto.due_date = date.fromisoformat(upd_task_dto.due_date).isoformat()
         except ValueError:
             return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
+    # может работа фронта, но: обновление closed date относительно статуса, если он изменился
+    if upd_task_dto.task_status is not None:
+        if upd_task_dto.task_status == 1:
+            upd_task_dto.closed_date = None
+        elif upd_task_dto.task_status == 2:
+            task_from_db = task_repository.get_task_by_id(task_id) # костыль из-за обработки на беке?: получение текущего closed_dttm из бд
+            assert task_from_db is not None, f'task must be saved in database before updating'
+            if task_from_db.closed_dttm is None:
+                upd_task_dto.closed_date == datetime.now().date().isoformat()
     task_repository.update_task(upd_task_dto)
     return jsonify({"status": 'success'})
     
