@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from pydantic import ValidationError
 from .models import init_db
 from datetime import date, datetime
-from .classes import CreateTaskDTO, UpdateTaskDTO, CreateTaskCommentDTO, CreateTaskTagDTO, CreateTaskTagXTaskDTO
+from .classes import CreateTaskDTO, UpdateTaskDTO, CreateTaskCommentDTO, CreateTaskTagDTO, CreateTaskTagXTaskDTO, UpdateTaskTagDTO, UpdateTaskCommentDTO
 from .src.db_handlers import task_repository, task_tag_repository, task_comment_repository
 from flask.json.provider import DefaultJSONProvider
 import numpy as np
@@ -142,10 +142,22 @@ def create_comment_to_task():
 def get_task_comments(task_id):
     return jsonify(task_comment_repository.get_task_comments_by_task_id(task_id))
 
-@app.route('/api/tasks/comment/delete/<int:comment_id>')
+@app.route('/api/tasks/comment/delete/<int:comment_id>', methods=['DELETE'])
 def delete_task_comment(comment_id):
     task_comment_repository.delete_task_comment(comment_id)
     return jsonify({'status': 'success'})
+
+@app.route('/api/tasks/comment/<int:comment_id>', methods=['PUT'])
+def update_task_comment(comment_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        upd_task_comment_dto = UpdateTaskCommentDTO(**data, comment_id=comment_id)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    task_comment_repository.update_task_comment(upd_task_comment_dto)
+    return jsonify({"status": 'success'})
 
 @app.route('/api/task_tags', methods=['POST'])
 def create_new_task_tag():
@@ -184,6 +196,23 @@ def get_all_task_tags():
 def get_all_tags_with_tasks():
     ttgxt = task_tag_repository.get_all_task_tag_x_task_entries()
     return jsonify(ttgxt)
+
+@app.route('/api/task_tags/<int:task_tag_id>', methods=['DELETE'])
+def delete_task_tag_global(task_tag_id):
+    task_tag_repository.delete_task_tag(task_tag_id)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/task_tags/<int:task_tag_id>', methods=['PUT'])
+def update_task_tag(task_tag_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        upd_task_tag_dto = UpdateTaskTagDTO(**data, task_tag_id=task_tag_id)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    task_tag_repository.update_task_tag(upd_task_tag_dto)
+    return jsonify({"status": 'success'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

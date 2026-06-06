@@ -4,7 +4,7 @@ import {
   syncDownload, syncUpload,
   fetchAllTags, fetchTaskTagsXTask,
   assignTagToTask, unassignTagFromTask, createTag,
-  deleteTagGlobally,
+  deleteTagGlobally, updateTag,
 } from './api';
 import { Task, CreateTaskDTO, UpdateTaskDTO, TaskTag } from './types';
 import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
@@ -255,6 +255,12 @@ const App: React.FC = () => {
     setHasUnsavedChanges(true);
   }, [loadTagsData]);
 
+  const handleUpdateTag = useCallback(async (tagId: number, text: string, color: string) => {
+    await updateTag(tagId, text, color);
+    await loadTagsData(); // перезагружаем теги и связи
+    setHasUnsavedChanges(true);
+  }, [loadTagsData]);
+
   const refreshTagsForTask = useCallback(async (taskId: number) => {
     try {
       const assignments = await fetchTaskTagsXTask();
@@ -308,6 +314,7 @@ const App: React.FC = () => {
           onFilterByTag={setFilterTagId}
           activeFilterTagId={filterTagId}
           onDeleteTagGlobally={deleteTagGlobally}
+          onUpdateTag={handleUpdateTag}
         />
         <TaskList
           tasks={filteredTasks}

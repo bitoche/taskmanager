@@ -335,14 +335,14 @@ const TaskModal: React.FC<Props> = ({
           </div>
 
           <div className="task-modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Отмена
-            </button>
             {task && (
               <button type="button" className="btn-danger" onClick={onDelete}>
                 <Trash2 size={16} /> Удалить
               </button>
             )}
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Отмена
+            </button>
             <button type="submit" className="btn-primary">
               <Check size={16} /> Сохранить
             </button>

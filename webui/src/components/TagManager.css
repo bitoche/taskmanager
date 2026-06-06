@@ -1,0 +1,26 @@
+.tag-edit-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-edit-form input[type="text"] {
+  width: 100px;
+  padding: 2px 4px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 0.8rem;
+}
+.tag-edit-form input[type="color"] {
+  width: 24px;
+  height: 24px;
+  border: none;
+  cursor: pointer;
+}
+.tag-edit-form button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+}

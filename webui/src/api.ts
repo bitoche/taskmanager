@@ -132,3 +132,13 @@ export async function deleteTagGlobally(taskTagId: number): Promise<void> {
   });
   if (!res.ok) throw new Error('Failed to delete tag');
 }
+
+// Добавить после остальных функций для тегов
+export async function updateTag(tagId: number, tagText: string, tagColor: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/task_tags/${tagId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag_text: tagText, tag_color: tagColor }),
+  });
+  if (!res.ok) throw new Error('Failed to update tag');
+}
