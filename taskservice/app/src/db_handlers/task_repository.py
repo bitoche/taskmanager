@@ -1,6 +1,6 @@
 import pandas as pd
-from .models import get_db
-from .classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
+from ...models import get_db
+from ...classes import Task, _df_to_list_of_obj, CreateTaskDTO, UpdateTaskDTO
 
 def get_all_tasks() -> pd.DataFrame:
     print('get all')

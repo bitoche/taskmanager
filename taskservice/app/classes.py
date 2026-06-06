@@ -74,6 +74,71 @@ class TaskStatus:
         'task_status_id_sequence START 1'
     ]
 
+
+@dataclass
+class TaskComment:
+    comment_id: int = None
+    task_id: int = None
+    text: str = None
+    created_at: DateTime = None
+    _nullables: ClassVar[dict] = {
+        'text': 'NOT NULL',
+        'task_id': 'NOT NULL',
+        'created_at': 'NOT NULL'
+    }
+    _defaults: ClassVar[dict] = {
+        'comment_id': "nextval('comment_id_sequence')",
+        'created_at': "CURRENT_TIMESTAMP"
+    }
+    _sequences: ClassVar[list] = [
+        'comment_id_sequence START 1'
+    ]
+class CreateTaskCommentDTO(BaseModel):
+    task_id: int 
+    text: str
+class UpdateTaskCommentDTO(BaseModel):
+    comment_id: int
+    text: Optional[str] = None
+
+
+@dataclass
+class TaskTag:
+    task_tag_id: int = None
+    tag_color: str = None
+    tag_text: str = None
+    _nullables: ClassVar[dict] = {
+        'tag_text': 'NOT NULL',
+        'tag_color': 'NOT NULL'
+    }
+    _defaults: ClassVar[dict] = {
+        'task_tag_id': "nextval('task_tag_id_sequence')"
+    }
+    _sequences: ClassVar[list] = [
+        'task_tag_id_sequence START 1'
+    ]
+
+@dataclass
+class TaskTagXTask:
+    task_tag_id: int = None
+    task_id: int = None
+    _nullables: ClassVar[dict] = {
+        'task_tag_id': 'UNIQUE',
+        'task_id': 'UNIQUE'
+    }
+    _defaults: ClassVar[dict] = {}
+    _sequences: ClassVar[list] = []
+
+class CreateTaskTagDTO(BaseModel):
+    tag_color: str
+    tag_text: str
+class CreateTaskTagXTaskDTO(BaseModel):
+    task_tag_id: int
+    task_id: int
+class UpdateTaskTagDTO(BaseModel):
+    task_tag_id: int
+    tag_color: Optional[str]
+    tag_text: Optional[str]
+
 def convert_class_to_sql_type(cls: any):
     type_map = {
         str: 'VARCHAR',
@@ -115,3 +180,17 @@ def _df_to_list_of_obj(df: pd.DataFrame, cls: Any) -> list[Any]:
         return [cls() for _ in range(len(df))]
     cols = [df[attr] for attr in attribs]
     return [cls(**dict(zip(attribs, row))) for row in zip(*cols)]
+
+@dataclass
+class TaskCommentView(TaskComment):
+    pass
+
+@dataclass
+class TaskTagView(TaskTag):
+    pass
+
+@dataclass
+class TaskView(Task):
+    task_status: str = None
+    task_comments: list[TaskCommentView] = None
+    task_tags: list[TaskTagView] = None

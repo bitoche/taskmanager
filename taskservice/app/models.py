@@ -13,6 +13,9 @@ def init_db():
     # Получаем структуру таблиц (колонки и последовательности для автоинкремента)
     tasks_columns, tasks_sequences = get_sql_table(Task)
     status_columns, status_sequences = get_sql_table(TaskStatus)
+    task_comment_columns, task_comment_sequences = get_sql_table(TaskComment)
+    task_tag_columns, task_tag_sequences = get_sql_table(TaskTag)
+    task_tag_x_task_columns, task_tag_x_task_sequences = get_sql_table(TaskTagXTask)
 
     # Вспомогательная функция для генерации CREATE SEQUENCE
     def make_create_sequence_sql(sequences):
@@ -21,9 +24,15 @@ def init_db():
     # Формируем части SQL-скрипта
     tasks_seq_sql = make_create_sequence_sql(tasks_sequences)
     status_seq_sql = make_create_sequence_sql(status_sequences)
+    task_comment_seq_sql = make_create_sequence_sql(task_comment_sequences)
+    task_tag_seq_sql = make_create_sequence_sql(task_tag_sequences)
+    task_tag_x_task_seq_sql = make_create_sequence_sql(task_tag_x_task_sequences)
 
     tasks_columns_sql = ',\n\t'.join(tasks_columns)
     status_columns_sql = ',\n\t'.join(status_columns)
+    task_comment_columns_sql = ',\n\t'.join(task_comment_columns)
+    task_tag_columns_sql = ',\n\t'.join(task_tag_columns)
+    task_tag_x_task_columns_sql = ',\n\t'.join(task_tag_x_task_columns)
 
     # Полный SQL-скрипт (f-string делает код нагляднее)
     sql_script = f"""
@@ -41,6 +50,19 @@ INSERT INTO task_status (status_name) VALUES
     ('active'),
     ('completed')
 ON CONFLICT DO NOTHING;
+
+{task_comment_seq_sql}
+CREATE TABLE IF NOT EXISTS task_comment (
+    {task_comment_columns_sql}
+);
+{task_tag_seq_sql}
+CREATE TABLE IF NOT EXISTS task_tag (
+    {task_tag_columns_sql}
+);
+{task_tag_x_task_seq_sql}
+CREATE TABLE IF NOT EXISTS task_tag_x_task (
+    {task_tag_x_task_columns_sql}
+);
 """
     
     # remote = remote_files_handler.RemoteFilesHandler()

@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 from pydantic import ValidationError
 from .models import init_db
 from datetime import date
-from .classes import CreateTaskDTO, UpdateTaskDTO
-from . import db_handler
+from .classes import CreateTaskDTO, UpdateTaskDTO, CreateTaskCommentDTO, CreateTaskTagDTO, CreateTaskTagXTaskDTO
+from .src.db_handlers import task_repository, task_tag_repository, task_comment_repository
 from flask.json.provider import DefaultJSONProvider
 import numpy as np
 import pandas as pd
@@ -45,12 +45,12 @@ app.json = CustomJSONProvider(app)
 
 @app.route('/api/tasks', methods=['GET'])
 def list_tasks():
-    tasks = db_handler.get_all_tasks()
+    tasks = task_repository.get_all_tasks()
     return jsonify(tasks)
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET'])
 def get_task_by_id(task_id):
-    task = db_handler.get_task_by_id(task_id)
+    task = task_repository.get_task_by_id(task_id)
     return jsonify(task)
 
 @app.route('/api/tasks/between', methods=['GET'])
@@ -59,7 +59,7 @@ def list_tasks_bw():
     date_to = request.args.get('date_to')
     if not date_from or not date_to:
         return jsonify({"error": "Missing date_from or date_to"}), 400
-    tasks = db_handler.get_all_tasks_between_dates(date_from, date_to)
+    tasks = task_repository.get_all_tasks_between_dates(date_from, date_to)
     return jsonify(tasks)
 
 @app.route('/api/tasks', methods=['POST'])
@@ -76,7 +76,7 @@ def create_task():
             task_dto.due_date = date.fromisoformat(task_dto.due_date).isoformat()
         except ValueError:
             return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
-    db_handler.insert_task(task_dto)
+    task_repository.insert_task(task_dto)
     return jsonify({"status": 'success'})
 
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
@@ -93,13 +93,13 @@ def update_task(task_id):
             upd_task_dto.due_date = date.fromisoformat(upd_task_dto.due_date).isoformat()
         except ValueError:
             return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
-    db_handler.update_task(upd_task_dto)
+    task_repository.update_task(upd_task_dto)
     return jsonify({"status": 'success'})
     
 
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    if db_handler.delete_task(task_id):
+    if task_repository.delete_task(task_id):
         return jsonify({"status": "deleted"})
     else:
         return jsonify({'status': 'not deleted'})
@@ -116,6 +116,30 @@ def upload_updated_tasks_db():
     remotes = remote_files_handler.RemoteFilesHandler()
     res = remotes.upload_file()
     return jsonify({'status': res})
+
+@app.route('/api/tasks/comment', methods=['GET'])
+def create_comment_to_task(task_id: int):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        create_comm_dto = CreateTaskCommentDTO(**data)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    task_comment_repository.insert_task_comment(create_comm_dto)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/tasks')
+
+@app.route('/api/task_tags', methods=['GET'])
+def get_all_task_tags():
+    tags = task_tag_repository.get_all_task_tags()
+    return jsonify(tags)
+@app.route('/api/tasks/sort/tag/<int:task_tag_id>', methods=['GET'])
+def get_all_tasks_with_tag(task_tag_id: int):
+    task_tag_x_task = task_tag_repository.get_tasks_by_task_tag_id(task_tag_id)
+    return jsonify(task_tag_x_task)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
