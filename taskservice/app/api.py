@@ -126,8 +126,8 @@ def upload_updated_tasks_db():
     res = remotes.upload_file()
     return jsonify({'status': res})
 
-@app.route('/api/tasks/comment', methods=['GET'])
-def create_comment_to_task(task_id: int):
+@app.route('/api/tasks/comment', methods=['POST'])
+def create_comment_to_task():
     data = request.get_json()
     if not data:
         return jsonify({"error": "Missing JSON body"}), 400
@@ -138,15 +138,52 @@ def create_comment_to_task(task_id: int):
     task_comment_repository.insert_task_comment(create_comm_dto)
     return jsonify({'status': 'success'})
 
+@app.route('/api/tasks/<int:task_id>/comments', methods=['GET'])
+def get_task_comments(task_id):
+    return jsonify(task_comment_repository.get_task_comments_by_task_id(task_id))
+
+@app.route('/api/tasks/comment/delete/<int:comment_id>')
+def delete_task_comment(comment_id):
+    task_comment_repository.delete_task_comment(comment_id)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/task_tags', method=['POST'])
+def create_new_task_tag():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        create_tag_dto = CreateTaskTagDTO(**data)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    task_tag_repository.create_new_task_tag(create_tag_dto)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/task_tags/assign', methods=['POST'])
+def assign_tag_to_task():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+    try:
+        create_ttgxt_dto = CreateTaskTagXTaskDTO(**data)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    task_tag_repository.create_new_task_tag_x_task(create_ttgxt_dto)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/task_tags/unassign/<int:task_tag_id>/task/<int:task_id>', methods=['DELETE'])
+def unassign_tag_from_task(task_tag_id, task_id):
+    task_tag_repository.delete_task_tag_x_task(task_tag_id=task_tag_id, task_id=task_id)
+    return jsonify({'status': 'success'})
+
 @app.route('/api/task_tags', methods=['GET'])
 def get_all_task_tags():
     tags = task_tag_repository.get_all_task_tags()
     return jsonify(tags)
-@app.route('/api/tasks/sort/tag/<int:task_tag_id>', methods=['GET'])
-def get_all_tasks_with_tag(task_tag_id: int):
-    task_tag_x_task = task_tag_repository.get_tasks_by_task_tag_id(task_tag_id)
-    return jsonify(task_tag_x_task)
-
+@app.route('/api/task_tags/tasks', methods=['GET'])
+def get_all_tags_with_tasks():
+    ttgxt = task_tag_repository.get_all_task_tag_x_task_entries()
+    return jsonify(ttgxt)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

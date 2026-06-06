@@ -29,7 +29,6 @@ def get_task_comments_by_task_id(task_id):
 
 def insert_task_comment(task_comment_dto: CreateTaskCommentDTO):
     new_task_c = TaskComment(**task_comment_dto.__dict__)
-    new_task_c.task_status = 1
     new_task_d = {
         k:v 
         for k,v 
