@@ -90,7 +90,9 @@ export async function addTaskComment(taskId: number, text: string): Promise<void
 }
 
 export async function deleteTaskComment(commentId: number): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/comment/delete/${commentId}`);
+  const res = await fetch(`${API_BASE}/tasks/comment/delete/${commentId}`, {
+    method: 'DELETE'
+  });
   if (!res.ok) throw new Error('Failed to delete comment');
 }
 
