@@ -91,6 +91,18 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // === Полное обновление задач за период (заменяет весь список) ===
+  const refreshTasksForRange = useCallback(async (from: string, to: string) => {
+    try {
+      const newTasks = await fetchTasksRange(from, to);
+      setTasks(newTasks);
+      return newTasks;
+    } catch (err) {
+      console.error('Failed to refresh tasks range', err);
+      return [];
+    }
+  }, []);
+
   const loadTagsData = useCallback(async () => {
     try {
       const tags = await fetchAllTags();
@@ -154,11 +166,27 @@ const App: React.FC = () => {
     const fromStr = formatLocalDate(from);
     const toStr = formatLocalDate(to);
     await Promise.all([
-      loadTasksForRange(fromStr, toStr),
+      refreshTasksForRange(fromStr, toStr),
       loadTagsData(),
     ]);
     setHasUnsavedChanges(false);
     setRemoteUpdatesAvailable(false);
+  };
+
+  const handleRefreshTasks = async () => {
+    await performSync(async () => {
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(today.getDate() - 30);
+      const to = new Date(today);
+      to.setDate(today.getDate() + 30);
+      const fromStr = formatLocalDate(from);
+      const toStr = formatLocalDate(to);
+      await Promise.all([
+        refreshTasksForRange(fromStr, toStr),
+        loadTagsData(),
+      ]);
+    });
   };
 
   // === Остальные обработчики (устанавливают флаг hasUnsavedChanges) ===
@@ -438,6 +466,9 @@ const App: React.FC = () => {
         />
       </div>
       <div className="fixed-buttons">
+        <button className="sync-btn" onClick={handleRefreshTasks} title="Обновить список задач">
+          <RefreshCw size={20} />
+        </button>
         <button className="sync-btn" onClick={handleSaveToCloud} title="Сохранить в облако">
           <Upload size={20} />
         </button>
