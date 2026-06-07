@@ -36,7 +36,7 @@ const TaskModal: React.FC<Props> = ({
   // Теги
   const [showTagSelector, setShowTagSelector] = useState(false);
   const [newTagText, setNewTagText] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#e0e0e0');
+  const [newTagColor, setNewTagColor] = useState('#ff0000');
   const [creatingTag, setCreatingTag] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);

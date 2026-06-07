@@ -125,7 +125,7 @@ const TagManager: React.FC<Props> = ({
             title="Дабл-клик, чтобы изменить тег"
           >
             {editingTagId === tag.task_tag_id ? (
-              <div className="tag-edit-form" onClick={(e) => e.stopPropagation()}>
+              <>
                 <input
                   type="text"
                   value={editText}
@@ -133,19 +133,21 @@ const TagManager: React.FC<Props> = ({
                   autoFocus
                   size={10}
                 />
-                <input
-                  type="color"
-                  value={editColor}
-                  onChange={(e) => setEditColor(e.target.value)}
-                  title="Цвет"
-                />
-                <button onClick={handleUpdateTag} disabled={updating}>
+                <label className="color-input" title="Цвет">
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                  />
+                  <span className="color-swatch" style={{ backgroundColor: editColor }}></span>
+                </label>
+                <button className="action-btn save-btn" onClick={(e) => { e.stopPropagation(); handleUpdateTag(); }} disabled={updating}>
                   <Check size={14} />
                 </button>
-                <button onClick={cancelEdit}>
+                <button className="action-btn cancel-btn" onClick={(e) => { e.stopPropagation(); cancelEdit(); }}>
                   <X size={14} />
                 </button>
-              </div>
+              </>
             ) : (
               <>
                 <span className="tag-color-dot" style={{ backgroundColor: tag.tag_color }}></span>

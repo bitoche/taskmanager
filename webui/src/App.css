@@ -749,3 +749,57 @@ footer {
 .toast-message .toast-text {
   padding: 0 !important;
 }
+
+/* Сброс стилей для input */
+input[type="text"] {
+    border: 0.1px dotted #ccc;        /* вместо стандартной рамки – спокойный серый */
+    outline: none;                 /* убирает синюю/чёрную обводку при фокусе */
+    background: none;              /* белый фон, можно прозрачный или под свой фон */
+    padding: 3px;             /* внутренние отступы для удобства */
+    font-family: inherit;          /* наследует шрифт от родителя */
+    border-radius: 4px;            /* чуть скруглим – выглядит опрятнее (опционально) */
+    transition: border 0.2s ease;  /* плавное изменение рамки при фокусе */
+}
+
+/* При фокусе можно добавить лёгкий акцент, но без резкой обводки */
+input[type="text"]:focus {
+    border-color: #999;            /* чуть темнее или цвет вашего бренда */
+    /* либо вообще ничего не менять, если не хотим выбивания */
+}
+
+/* Сброс стандартного стиля */
+input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ddd;
+  border-radius: 50%;      /* круглый вид */
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: 0.2s;
+}
+
+/* Для Chrome/Edge – меняем вид внутреннего цветного квадрата */
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+/* Для Firefox */
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+/* Эффект при наведении */
+input[type="color"]:hover {
+  transform: scale(1.05);
+  border-color: #aaa;
+}
