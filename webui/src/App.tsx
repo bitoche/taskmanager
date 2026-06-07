@@ -4,13 +4,13 @@ import {
   syncDownload, syncUpload,
   fetchAllTags, fetchTaskTagsXTask,
   assignTagToTask, unassignTagFromTask, createTag,
-  deleteTagGlobally, updateTag,
+  deleteTagGlobally, updateTag, checkRemoteUpdates,
 } from './api';
 import { Task, CreateTaskDTO, UpdateTaskDTO, TaskTag } from './types';
 import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
 import TaskModal from './components/TaskModal';
 import TaskList from './components/TaskList';
-import { ChevronLeft, ChevronRight, Home, Upload, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Upload, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import TagManager from './components/TagManager';
 
 const App: React.FC = () => {
@@ -23,6 +23,8 @@ const App: React.FC = () => {
   const [modalState, setModalState] = useState<{ isOpen: boolean; task?: Task | null; defaultDate?: string }>({
     isOpen: false,
   });
+  const [remoteUpdatesAvailable, setRemoteUpdatesAvailable] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
 
   // === Состояния для тегов ===
   const [allTags, setAllTags] = useState<TaskTag[]>([]);
@@ -109,12 +111,11 @@ const App: React.FC = () => {
   // === Обработчики для кнопок синхронизации ===
   const handleSaveToCloud = async () => {
     await performSync(syncUpload);
-    setHasUnsavedChanges(false); // после успешного сохранения сбрасываем флаг
+    setHasUnsavedChanges(false);
   };
 
   const handleLoadFromCloud = async () => {
     await performSync(syncDownload);
-    // После загрузки обновляем все данные
     const today = new Date();
     const from = new Date(today);
     from.setDate(today.getDate() - 30);
@@ -126,7 +127,8 @@ const App: React.FC = () => {
       loadTasksForRange(fromStr, toStr),
       loadTagsData(),
     ]);
-    setHasUnsavedChanges(false); // синхронизировано
+    setHasUnsavedChanges(false);
+    setRemoteUpdatesAvailable(false);
   };
 
   // === Остальные обработчики (устанавливают флаг hasUnsavedChanges) ===
@@ -136,6 +138,24 @@ const App: React.FC = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // === Функция проверки обновлений с индикатором ===
+  const checkRemoteUpdatesHandler = useCallback(async () => {
+    setCheckingUpdates(true);
+    try {
+      const hasUpdates = await checkRemoteUpdates();
+      setRemoteUpdatesAvailable(hasUpdates);
+      setTimeout(() => setCheckingUpdates(false), 1000);
+    } catch (err) {
+      console.error('Failed to check remote updates', err);
+      setTimeout(() => setCheckingUpdates(false), 1000);
+    }
+  }, []);
+  useEffect(() => {
+    checkRemoteUpdatesHandler();
+    const interval = setInterval(checkRemoteUpdatesHandler, 10000);
+    return () => clearInterval(interval);
+  }, [checkRemoteUpdatesHandler]);
 
   const scrollToToday = () => {
     const today = new Date();
@@ -257,7 +277,7 @@ const App: React.FC = () => {
 
   const handleUpdateTag = useCallback(async (tagId: number, text: string, color: string) => {
     await updateTag(tagId, text, color);
-    await loadTagsData(); // перезагружаем теги и связи
+    await loadTagsData();
     setHasUnsavedChanges(true);
   }, [loadTagsData]);
 
@@ -280,6 +300,27 @@ const App: React.FC = () => {
   const filteredTasks = filterTagId
     ? tasks.filter(task => (taskTagsMap.get(task.task_id) || []).some(tag => tag.task_tag_id === filterTagId))
     : tasks;
+
+  // Формируем массив активных тостов
+  type Toast = {
+    id: string;
+    type: 'info' | 'warning' | 'error';
+    message: React.ReactNode;
+    action?: { label: string; handler: () => void };
+  };
+
+  const toastList: Toast[] = [
+    { id: 'syncing', type: 'info' as const, message: <><RefreshCw size={16} className="spin-icon" /><div className='toast-text'>Синхронизация с облаком...</div></> },
+    { id: 'checking', type: 'info' as const, message: <><RefreshCw size={16} className="spin-icon"/></> }, /*<div className='toast-text'>Проверка синхронизации...</div>*/
+    { id: 'remote-update', type: 'warning' as const, message: <><AlertTriangle size={16} /><div className='toast-text'>Доступна новая версия в облаке</div></>, action: { label: 'Загрузить', handler: handleLoadFromCloud } },
+    { id: 'unsaved', type: 'error' as const, message: <><AlertTriangle size={16} /><div className='toast-text'>Есть несохранённые изменения</div></>, action: { label: 'Сохранить', handler: handleSaveToCloud } },
+  ].filter(toast => {
+    if (toast.id === 'syncing') return syncing;
+    if (toast.id === 'checking') return checkingUpdates;
+    if (toast.id === 'remote-update') return remoteUpdatesAvailable && !syncing;
+    if (toast.id === 'unsaved') return hasUnsavedChanges && !syncing;
+    return false;
+  });
 
   return (
     <>
@@ -351,15 +392,19 @@ const App: React.FC = () => {
           <Home size={20} />
         </button>
       </div>
-      {syncing && <div className="sync-toast">🔄 Синхронизация с облаком...</div>}
-      {hasUnsavedChanges && !syncing && (
-        <div className="unsaved-toast">
-          ⚠️ Есть несохранённые изменения
-          <button onClick={handleSaveToCloud} className="unsaved-save-btn">
-            Сохранить
-          </button>
-        </div>
-      )}
+
+      <div className="toast-container">
+        {toastList.map((toast, index) => (
+          <div key={toast.id} className={`toast toast-${toast.type}`} style={{ animationDelay: `${index * 0.05}s` }}>
+            <span className="toast-message">{toast.message}</span>
+            {toast.action && (
+              <button onClick={toast.action.handler} className="toast-btn">
+                {toast.action.label}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </>
   );
 };

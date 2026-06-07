@@ -116,15 +116,28 @@ def delete_task(task_id):
 
 @app.route('/api/remote_db/sync_download')
 def download_updated_tasks_db():
-    remotes = remote_files_handler.RemoteFilesHandler()
-    res = remotes.download_file()
+    remote_api = remote_files_handler.get_remote_files_handler()
+    res = remote_api.download_file()
     return jsonify({'status': res})
 
 @app.route('/api/remote_db/sync_upload')
 def upload_updated_tasks_db():
-    remotes = remote_files_handler.RemoteFilesHandler()
-    res = remotes.upload_file()
+    remote_api = remote_files_handler.get_remote_files_handler()
+    res = remote_api.upload_file()
     return jsonify({'status': res})
+
+@app.route('/api/remote_db/check_updates')
+def check_remote_db_for_updates():
+    remote_api = remote_files_handler.get_remote_files_handler()
+    hash_equals = remote_api.is_remote_equals_local_file()
+    res = False
+    if not hash_equals:
+        compare_res = remote_api.compare_file_versions()
+        if compare_res == 'remote_newer':
+            res = True
+        elif compare_res == 'error':
+            res = None
+    return jsonify({'updates': res})
 
 @app.route('/api/tasks/comment', methods=['POST'])
 def create_comment_to_task():

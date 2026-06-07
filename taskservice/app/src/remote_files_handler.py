@@ -4,13 +4,22 @@ import yadisk
 import shutil
 import hashlib
 
+saved_remote_files_handler = None
 
 class RemoteFilesHandler:
     def __init__(self):
         self.interface = yadisk.YaDisk(token=config.REMOTE_STORAGE_TOKEN) if config.REMOTE_STORAGE_TOKEN is not None and isinstance(config.REMOTE_STORAGE_TOKEN, str) else None
         self.remote_filepath = Path('/taskservice/tech/tasks.db')
         self.file = config.DB_PATH
-        self.last_loaded_hash: str = None
+        self.last_loaded_hash: str | None = None
+        self._update_loaded_hash()
+    
+    def _update_loaded_hash(self):
+        """Обновляет хэш загруженного локального файла."""
+        if self.file and Path(self.file).exists():
+            self.last_loaded_hash = self.get_file_hash(self.file)
+        else:
+            self.last_loaded_hash = None
     
     def get_file_hash(self, file_path, algorithm='sha256'):
         h = hashlib.new(algorithm)
@@ -18,8 +27,73 @@ class RemoteFilesHandler:
             while chunk := f.read(4096):
                 h.update(chunk)
         return h.hexdigest()
-        
     
+    def is_remote_equals_local_file(self):
+        if self.last_loaded_hash is None:
+            return False
+        try:
+            meta = self.interface.get_meta(str(self.remote_filepath))
+            remote_sha256 = getattr(meta, 'sha256', None)
+            if remote_sha256 is None:
+                print(f'Warning: remote_sha256 is None, meta attributes: {dir(meta)}')
+                return False
+            return self.last_loaded_hash == remote_sha256
+        except Exception as e:
+            print(f'Error checking remote file meta: {e}')
+            return False 
+    def get_remote_modified_time(self):
+        """Получает время изменения удалённого файла."""
+        try:
+            meta = self.interface.get_meta(str(self.remote_filepath))
+            return getattr(meta, 'modified', None)
+        except Exception as e:
+            print(f'Error getting remote file meta: {e}')
+            return None
+    
+    def get_local_modified_time(self):
+        """Получает время изменения локального файла."""
+        try:
+            if self.file and Path(self.file).exists():
+                return Path(self.file).stat().st_mtime
+            return None
+        except Exception as e:
+            print(f'Error getting local file meta: {e}')
+            return None
+    def compare_file_versions(self):
+        """
+        Сравнивает версии локального и удалённого файлов по времени изменения.
+        
+        Возвращает:
+            'remote_newer' - удалённая версия новее
+            'local_newer' - локальная версия новее
+            'equal' - файлы одинаковые (по времени)
+            'error' - ошибка при сравнении
+        """
+        from datetime import datetime
+        
+        remote_modified = self.get_remote_modified_time()
+        local_modified = self.get_local_modified_time()
+        
+        if remote_modified is None or local_modified is None:
+            print(f'Cannot compare: remote_modified={remote_modified}, local_modified={local_modified}')
+            return 'error'
+        
+        # Конвертируем remote_modified в timestamp
+        try:
+            if isinstance(remote_modified, str):
+                remote_modified = datetime.fromisoformat(remote_modified.replace('Z', '+00:00')).timestamp()
+            elif isinstance(remote_modified, datetime):
+                remote_modified = remote_modified.timestamp()
+        except Exception as e:
+            print(f'Error parsing remote_modified: {e}')
+            return 'error'
+        
+        if remote_modified > local_modified:
+            return 'remote_newer'
+        elif local_modified > remote_modified:
+            return 'local_newer'
+        else:
+            return 'equal'
     def upload_file(self):
         if self.interface is None:
             return 'skipped'
@@ -57,4 +131,10 @@ class RemoteFilesHandler:
         p.unlink(missing_ok=True)
         shutil.move(temp_file, self.file)
         
+        self._update_loaded_hash()
         return status
+    
+def get_remote_files_handler() -> RemoteFilesHandler:
+    if saved_remote_files_handler is None:
+        return RemoteFilesHandler()
+    else: return saved_remote_files_handler

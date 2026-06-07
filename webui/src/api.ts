@@ -66,6 +66,13 @@ export async function syncUpload(): Promise<void> {
   if (!res.ok) throw new Error('Sync upload failed');
 }
 
+export async function checkRemoteUpdates(): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/remote_db/check_updates`);
+  if (!res.ok) throw new Error('Failed to check updates');
+  const data = await res.json();
+  return data.updates === true;
+}
+
 // ========== Комментарии ==========
 export async function fetchTaskComments(taskId: number): Promise<TaskComment[]> {
   const res = await fetch(`${API_BASE}/tasks/${taskId}/comments`);
