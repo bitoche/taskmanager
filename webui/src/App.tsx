@@ -208,6 +208,7 @@ const App: React.FC = () => {
 
   // === Функция проверки обновлений с индикатором ===
   const checkRemoteUpdatesHandler = useCallback(async () => {
+    if (remoteUpdatesAvailable) return; // Уже есть изменения в облаке, проверять нет смысла
     setCheckingUpdates(true);
     try {
       const hasUpdates = await checkRemoteUpdates();
@@ -217,7 +218,7 @@ const App: React.FC = () => {
       console.error('Failed to check remote updates', err);
       setTimeout(() => setCheckingUpdates(false), 1000);
     }
-  }, []);
+  }, [remoteUpdatesAvailable]);
   useEffect(() => {
     checkRemoteUpdatesHandler();
     const interval = setInterval(checkRemoteUpdatesHandler, 10000);
