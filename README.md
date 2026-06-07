@@ -11,6 +11,7 @@
 3. Полученный токен необходимо добавить в `taskmanager/taskservice/.env`, в переменную `REMOTE_STORAGE_TOKEN`
 
 Далее, если проект ранее был поднят без использования облака, необходимо в интерфейсе нажать на кнопку "Сохранить в облако", после чего файл будет сохранен на ваш ЯД.
+
 <img width="231" height="331" alt="image" src="https://github.com/user-attachments/assets/b4140d12-780b-45c5-8b3d-d3b7a0ae67cf" />
  
 
