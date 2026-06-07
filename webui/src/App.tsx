@@ -31,19 +31,49 @@ const App: React.FC = () => {
   const [taskTagsMap, setTaskTagsMap] = useState<Map<number, TaskTag[]>>(new Map());
   const [filterTagId, setFilterTagId] = useState<number | null>(null);
 
+  // === Состояние для toast-ов ===
+  type Toast = {
+    id: string;
+    uniqueId: string;
+    type: 'info' | 'warning' | 'error';
+    message: React.ReactNode;
+    action?: { label: string; handler: () => void };
+  };
+  const [toastQueue, setToastQueue] = useState<Toast[]>([]);
+  const toastIdCounter = useRef(0);
+  const activeToasts = useRef<Set<string>>(new Set());
+
+  const addToast = useCallback((id: string, toast: Omit<Toast, 'id' | 'uniqueId'>) => {
+    if (activeToasts.current.has(id)) return; // Уже есть такой toast
+    activeToasts.current.add(id);
+    const uniqueId = `${Date.now()}-${toastIdCounter.current++}`;
+    setToastQueue(prev => [...prev, { ...toast, id, uniqueId }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    activeToasts.current.delete(id);
+    setToastQueue(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // === Вспомогательная функция синхронизации с индикатором ===
   const performSync = useCallback(async (syncFn: () => Promise<void>) => {
     syncCounter.current++;
-    if (syncCounter.current === 1) setSyncing(true);
+    if (syncCounter.current === 1) {
+      setSyncing(true);
+      addToast('syncing', { type: 'info', message: <><RefreshCw size={16} className="spin-icon" /><div className='toast-text'>Синхронизация с облаком...</div></> });
+    }
     try {
       await syncFn();
     } catch (err) {
       console.error('Sync error:', err);
     } finally {
       syncCounter.current--;
-      if (syncCounter.current === 0) setSyncing(false);
+      if (syncCounter.current === 0) {
+        setSyncing(false);
+        removeToast('syncing');
+      }
     }
-  }, []);
+  }, [addToast, removeToast]);
 
   // === Загрузка задач и тегов (чистая, без автоматической синхронизации) ===
   const loadTasksForRange = useCallback(async (from: string, to: string) => {
@@ -156,6 +186,53 @@ const App: React.FC = () => {
     const interval = setInterval(checkRemoteUpdatesHandler, 10000);
     return () => clearInterval(interval);
   }, [checkRemoteUpdatesHandler]);
+
+  // Toast для проверки обновлений
+  useEffect(() => {
+    if (checkingUpdates) {
+      addToast('checking', { type: 'info', message: <><RefreshCw size={16} className="spin-icon"/></> });
+    }
+  }, [checkingUpdates, addToast]);
+
+  useEffect(() => {
+    if (!checkingUpdates) {
+      removeToast('checking');
+    }
+  }, [checkingUpdates, removeToast]);
+
+  // Toast для доступных обновлений в облаке
+  useEffect(() => {
+    if (remoteUpdatesAvailable && !syncing) {
+      addToast('remote-update', { 
+        type: 'warning', 
+        message: <><AlertTriangle size={16} /><div className='toast-text'>Доступна новая версия в облаке</div></>, 
+        action: { label: 'Загрузить', handler: handleLoadFromCloud } 
+      });
+    }
+  }, [remoteUpdatesAvailable, syncing, addToast, handleLoadFromCloud]);
+
+  useEffect(() => {
+    if (!remoteUpdatesAvailable || syncing) {
+      removeToast('remote-update');
+    }
+  }, [remoteUpdatesAvailable, syncing, removeToast]);
+
+  // Toast для несохранённых изменений
+  useEffect(() => {
+    if (hasUnsavedChanges && !syncing) {
+      addToast('unsaved', { 
+        type: 'error', 
+        message: <><AlertTriangle size={16} /><div className='toast-text'>Есть несохранённые изменения</div></>, 
+        action: { label: 'Сохранить', handler: handleSaveToCloud } 
+      });
+    }
+  }, [hasUnsavedChanges, syncing, addToast, handleSaveToCloud]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges || syncing) {
+      removeToast('unsaved');
+    }
+  }, [hasUnsavedChanges, syncing, removeToast]);
 
   const scrollToToday = () => {
     const today = new Date();
@@ -301,27 +378,6 @@ const App: React.FC = () => {
     ? tasks.filter(task => (taskTagsMap.get(task.task_id) || []).some(tag => tag.task_tag_id === filterTagId))
     : tasks;
 
-  // Формируем массив активных тостов
-  type Toast = {
-    id: string;
-    type: 'info' | 'warning' | 'error';
-    message: React.ReactNode;
-    action?: { label: string; handler: () => void };
-  };
-
-  const toastList: Toast[] = [
-    { id: 'syncing', type: 'info' as const, message: <><RefreshCw size={16} className="spin-icon" /><div className='toast-text'>Синхронизация с облаком...</div></> },
-    { id: 'checking', type: 'info' as const, message: <><RefreshCw size={16} className="spin-icon"/></> }, /*<div className='toast-text'>Проверка синхронизации...</div>*/
-    { id: 'remote-update', type: 'warning' as const, message: <><AlertTriangle size={16} /><div className='toast-text'>Доступна новая версия в облаке</div></>, action: { label: 'Загрузить', handler: handleLoadFromCloud } },
-    { id: 'unsaved', type: 'error' as const, message: <><AlertTriangle size={16} /><div className='toast-text'>Есть несохранённые изменения</div></>, action: { label: 'Сохранить', handler: handleSaveToCloud } },
-  ].filter(toast => {
-    if (toast.id === 'syncing') return syncing;
-    if (toast.id === 'checking') return checkingUpdates;
-    if (toast.id === 'remote-update') return remoteUpdatesAvailable && !syncing;
-    if (toast.id === 'unsaved') return hasUnsavedChanges && !syncing;
-    return false;
-  });
-
   return (
     <>
       <div className="calendar-main">
@@ -394,8 +450,8 @@ const App: React.FC = () => {
       </div>
 
       <div className="toast-container">
-        {toastList.map((toast, index) => (
-          <div key={toast.id} className={`toast toast-${toast.type}`} style={{ animationDelay: `${index * 0.05}s` }}>
+        {toastQueue.map((toast, index) => (
+          <div key={toast.uniqueId} className={`toast toast-${toast.type}`} style={{ animationDelay: `${index * 0.05}s` }}>
             <span className="toast-message">{toast.message}</span>
             {toast.action && (
               <button onClick={toast.action.handler} className="toast-btn">

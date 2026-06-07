@@ -611,10 +611,10 @@ footer {
   bottom: 20px;
   right: 20px;
   display: flex;
-  flex-direction: column-reverse; /* новые тосты появляются снизу */
+  flex-direction: column-reverse;
+  align-items: flex-end;
   gap: 10px;
   z-index: 2000;
-  /* max-width: 320px; */
 }
 
 /* Базовый стиль тоста */
@@ -628,7 +628,8 @@ footer {
   align-items: center;
   gap: 12px;
   animation: slideInRight 0.3s ease;
-  width: max-content;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* Типы тостов */
