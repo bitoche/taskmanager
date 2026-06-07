@@ -18,6 +18,9 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingCloud, setLoadingCloud] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const syncCounter = useRef(0);
   const [modalState, setModalState] = useState<{ isOpen: boolean; task?: Task | null; defaultDate?: string }>({
@@ -74,6 +77,51 @@ const App: React.FC = () => {
       }
     }
   }, [addToast, removeToast]);
+
+  // === Обработчики для кнопок синхронизации ===
+  const handleSaveToCloud = async () => {
+    setSaving(true);
+    await performSync(syncUpload);
+    setHasUnsavedChanges(false);
+    setTimeout(() => setSaving(false), 500);
+  };
+
+  const handleLoadFromCloud = async () => {
+    setLoadingCloud(true);
+    await performSync(syncDownload);
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(today.getDate() - 30);
+    const to = new Date(today);
+    to.setDate(today.getDate() + 30);
+    const fromStr = formatLocalDate(from);
+    const toStr = formatLocalDate(to);
+    await Promise.all([
+      refreshTasksForRange(fromStr, toStr),
+      loadTagsData(),
+    ]);
+    setHasUnsavedChanges(false);
+    setRemoteUpdatesAvailable(false);
+    setTimeout(() => setLoadingCloud(false), 500);
+  };
+
+  const handleRefreshTasks = async () => {
+    setRefreshing(true);
+    await performSync(async () => {
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(today.getDate() - 30);
+      const to = new Date(today);
+      to.setDate(today.getDate() + 30);
+      const fromStr = formatLocalDate(from);
+      const toStr = formatLocalDate(to);
+      await Promise.all([
+        refreshTasksForRange(fromStr, toStr),
+        loadTagsData(),
+      ]);
+    });
+    setTimeout(() => setRefreshing(false), 500);
+  };
 
   // === Загрузка задач и тегов (чистая, без автоматической синхронизации) ===
   const loadTasksForRange = useCallback(async (from: string, to: string) => {
@@ -149,45 +197,6 @@ const App: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
-
-  // === Обработчики для кнопок синхронизации ===
-  const handleSaveToCloud = async () => {
-    await performSync(syncUpload);
-    setHasUnsavedChanges(false);
-  };
-
-  const handleLoadFromCloud = async () => {
-    await performSync(syncDownload);
-    const today = new Date();
-    const from = new Date(today);
-    from.setDate(today.getDate() - 30);
-    const to = new Date(today);
-    to.setDate(today.getDate() + 30);
-    const fromStr = formatLocalDate(from);
-    const toStr = formatLocalDate(to);
-    await Promise.all([
-      refreshTasksForRange(fromStr, toStr),
-      loadTagsData(),
-    ]);
-    setHasUnsavedChanges(false);
-    setRemoteUpdatesAvailable(false);
-  };
-
-  const handleRefreshTasks = async () => {
-    await performSync(async () => {
-      const today = new Date();
-      const from = new Date(today);
-      from.setDate(today.getDate() - 30);
-      const to = new Date(today);
-      to.setDate(today.getDate() + 30);
-      const fromStr = formatLocalDate(from);
-      const toStr = formatLocalDate(to);
-      await Promise.all([
-        refreshTasksForRange(fromStr, toStr),
-        loadTagsData(),
-      ]);
-    });
-  };
 
   // === Остальные обработчики (устанавливают флаг hasUnsavedChanges) ===
   const formatLocalDate = (date: Date) => {
@@ -466,14 +475,14 @@ const App: React.FC = () => {
         />
       </div>
       <div className="fixed-buttons">
-        <button className="sync-btn" onClick={handleRefreshTasks} title="Обновить список задач">
-          <RefreshCw size={20} />
+        <button className={`sync-btn ${saving ? 'sync-btn-loading' : ''}`} onClick={handleSaveToCloud} disabled={saving || loadingCloud || refreshing} title="Сохранить в облако">
+          <Upload size={20} className={saving ? 'pulse-icon' : ''} />
         </button>
-        <button className="sync-btn" onClick={handleSaveToCloud} title="Сохранить в облако">
-          <Upload size={20} />
+        <button className={`sync-btn ${loadingCloud ? 'sync-btn-loading' : ''}`} onClick={handleLoadFromCloud} disabled={saving || loadingCloud || refreshing} title="Загрузить из облака">
+          <Download size={20} className={loadingCloud ? 'pulse-icon' : ''} />
         </button>
-        <button className="sync-btn" onClick={handleLoadFromCloud} title="Загрузить из облака">
-          <Download size={20} />
+        <button className={`sync-btn ${refreshing ? 'sync-btn-loading' : ''}`} onClick={handleRefreshTasks} disabled={saving || loadingCloud || refreshing} title="Обновить список задач">
+          <RefreshCw size={20} className={refreshing ? 'spin-icon' : ''} />
         </button>
         <button className="today-btn-fixed" onClick={scrollToToday} title="Перейти к сегодняшнему дню">
           <Home size={20} />
