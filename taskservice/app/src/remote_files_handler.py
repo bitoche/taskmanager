@@ -28,78 +28,88 @@ class RemoteFilesHandler:
                 h.update(chunk)
         return h.hexdigest()
     
-    def is_remote_equals_local_file(self):
-        if self.last_loaded_hash is None:
-            return False
+    def _get_remote_hash(self):
+        """Получает хэш удалённого файла из метаданных."""
         try:
             meta = self.interface.get_meta(str(self.remote_filepath))
-            remote_sha256 = getattr(meta, 'sha256', None)
-            if remote_sha256 is None:
-                print(f'Warning: remote_sha256 is None, meta attributes: {dir(meta)}')
-                return False
-            return self.last_loaded_hash == remote_sha256
+            return getattr(meta, 'sha256', None)
         except Exception as e:
-            print(f'Error checking remote file meta: {e}')
-            return False 
-    def get_remote_modified_time(self):
-        """Получает время изменения удалённого файла."""
-        try:
-            meta = self.interface.get_meta(str(self.remote_filepath))
-            return getattr(meta, 'modified', None)
-        except Exception as e:
-            print(f'Error getting remote file meta: {e}')
+            print(f'Error getting remote file hash: {e}')
             return None
     
-    def get_local_modified_time(self):
-        """Получает время изменения локального файла."""
+    def _get_remote_modified_time(self):
+        """Получает время изменения удалённого файла в виде timestamp."""
+        from datetime import datetime
+        try:
+            meta = self.interface.get_meta(str(self.remote_filepath))
+            modified = getattr(meta, 'modified', None)
+            if modified is None:
+                return None
+            if isinstance(modified, str):
+                return datetime.fromisoformat(modified.replace('Z', '+00:00')).timestamp()
+            elif isinstance(modified, datetime):
+                return modified.timestamp()
+            return None
+        except Exception as e:
+            print(f'Error getting remote modified time: {e}')
+            return None
+    
+    def _get_local_modified_time(self):
+        """Получает время изменения локального файла в виде timestamp."""
         try:
             if self.file and Path(self.file).exists():
                 return Path(self.file).stat().st_mtime
             return None
         except Exception as e:
-            print(f'Error getting local file meta: {e}')
+            print(f'Error getting local modified time: {e}')
             return None
-    def compare_file_versions(self):
+    
+    def is_remote_equals_local_file(self):
+        """Сравнивает хэш локального файла с хэшем удалённого."""
+        local_hash = self.get_file_hash(self.file) if Path(self.file).exists() else None
+        remote_hash = self._get_remote_hash()
+        
+        if local_hash is None or remote_hash is None:
+            return False
+        return local_hash == remote_hash
+    
+    def has_remote_updates(self):
         """
-        Сравнивает версии локального и удалённого файлов по времени изменения.
+        Проверяет, есть ли обновления в облаке (удалённый файл новее локального).
         
         Возвращает:
-            'remote_newer' - удалённая версия новее
-            'local_newer' - локальная версия новее
-            'equal' - файлы одинаковые (по времени)
-            'error' - ошибка при сравнении
+            True - если удалённая версия новее
+            False - если локальная версия такая же или новее
+            None - если не удалось проверить
         """
-        from datetime import datetime
+        remote_hash = self._get_remote_hash()
+        local_hash = self.get_file_hash(self.file) if Path(self.file).exists() else None
         
-        remote_modified = self.get_remote_modified_time()
-        local_modified = self.get_local_modified_time()
+        print(f'[has_remote_updates] local_hash={local_hash}, remote_hash={remote_hash}')
+        
+        # Если хэши совпадают - обновлений нет
+        if remote_hash and local_hash and remote_hash == local_hash:
+            print('[has_remote_updates] hashes match, no updates')
+            return False
+        
+        # Если хэши не совпадают, проверяем время модификации
+        remote_modified = self._get_remote_modified_time()
+        local_modified = self._get_local_modified_time()
         
         if remote_modified is None or local_modified is None:
-            print(f'Cannot compare: remote_modified={remote_modified}, local_modified={local_modified}')
-            return 'error'
+            print(f'[has_remote_updates] Cannot compare times')
+            return None
         
-        # Конвертируем remote_modified в timestamp
-        try:
-            if isinstance(remote_modified, str):
-                remote_modified = datetime.fromisoformat(remote_modified.replace('Z', '+00:00')).timestamp()
-            elif isinstance(remote_modified, datetime):
-                remote_modified = remote_modified.timestamp()
-        except Exception as e:
-            print(f'Error parsing remote_modified: {e}')
-            return 'error'
-        
-        if remote_modified > local_modified:
-            return 'remote_newer'
-        elif local_modified > remote_modified:
-            return 'local_newer'
-        else:
-            return 'equal'
+        # Удалённый файл новее только если его время модификации больше
+        is_remote_newer = remote_modified > local_modified
+        print(f'[has_remote_updates] is_remote_newer={is_remote_newer}')
+        return is_remote_newer
     def upload_file(self):
         if self.interface is None:
             return 'skipped'
         current_hash = self.get_file_hash(file_path=self.file)
-        if self.last_loaded_hash is not None and self.last_loaded_hash == current_hash:
-            return 'hashed'
+        # if self.last_loaded_hash is not None and self.last_loaded_hash == current_hash:
+            # return 'hashed'
         try:
             self.interface.upload(self.file, str(self.remote_filepath), overwrite=True)
             status = '200'
