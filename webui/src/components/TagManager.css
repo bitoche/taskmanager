@@ -1,3 +1,33 @@
+:root {
+  --tag-color-input-border: #ddd;
+  --tag-color-input-border-hover: #999;
+  --tag-color-input-shadow: rgba(0, 0, 0, 0.1);
+  --tag-edit-border: #ccc;
+  --tag-edit-border-focus: #999;
+  --tag-action-btn: #666;
+  --tag-action-btn-hover: #e8e8e8;
+  --tag-action-btn-hover-text: #333;
+  --tag-save-btn: #28a745;
+  --tag-save-btn-hover: #d4edda;
+  --tag-cancel-btn: #dc3545;
+  --tag-cancel-btn-hover: #f8d7da;
+}
+
+.dark {
+  --tag-color-input-border: #4a4a6a;
+  --tag-color-input-border-hover: #606070;
+  --tag-color-input-shadow: rgba(0, 0, 0, 0.3);
+  --tag-edit-border: #4a4a6a;
+  --tag-edit-border-focus: #606070;
+  --tag-action-btn: #808090;
+  --tag-action-btn-hover: #3a3a55;
+  --tag-action-btn-hover-text: #e0e0e0;
+  --tag-save-btn: #28a745;
+  --tag-save-btn-hover: rgba(40, 167, 69, 0.2);
+  --tag-cancel-btn: #dc3545;
+  --tag-cancel-btn-hover: rgba(220, 53, 69, 0.2);
+}
+
 /* === Переиспользуемый класс для инпута цвета === */
 .color-input {
   display: inline-flex;
@@ -6,15 +36,15 @@
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tag-color-input-border);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   overflow: hidden;
 }
 
 .color-input:hover {
-  border-color: #999;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-color: var(--tag-color-input-border-hover);
+  box-shadow: 0 2px 6px var(--tag-color-input-shadow);
 }
 
 .color-input input[type="color"] {
@@ -42,19 +72,19 @@
 
 /* Сброс стилей для input */
 .tag-edit-form input[type="text"] {
-    border: 0.1px dotted #ccc;        /* вместо стандартной рамки – спокойный серый */
-    outline: none;                 /* убирает синюю/чёрную обводку при фокусе */
-    background: none;              /* белый фон, можно прозрачный или под свой фон */
-    padding: 3px;             /* внутренние отступы для удобства */
-    font-family: inherit;          /* наследует шрифт от родителя */
-    border-radius: 4px;            /* чуть скруглим – выглядит опрятнее (опционально) */
-    transition: border 0.2s ease;  /* плавное изменение рамки при фокусе */
+    border: 0.1px dotted var(--tag-edit-border);
+    outline: none;
+    background: none;
+    padding: 3px;
+    font-family: inherit;
+    border-radius: 4px;
+    transition: border 0.2s ease;
+    color: inherit;
 }
 
 /* При фокусе можно добавить лёгкий акцент, но без резкой обводки */
 .tag-edit-form input[type="text"]:focus {
-    border-color: #999;            /* чуть темнее или цвет вашего бренда */
-    /* либо вообще ничего не менять, если не хотим выбивания */
+    border-color: var(--tag-edit-border-focus);
 }
 
 .tag-edit-form .action-btn {
@@ -66,28 +96,28 @@
   justify-content: center;
   padding: 2px;
   border-radius: 4px;
-  transition: background-color 0.2s;
-  color: #666;
+  transition: background-color 0.2s, color 0.2s;
+  color: var(--tag-action-btn);
 }
 
 .tag-edit-form .action-btn:hover {
-  background-color: #e8e8e8;
-  color: #333;
+  background-color: var(--tag-action-btn-hover);
+  color: var(--tag-action-btn-hover-text);
 }
 
 .tag-edit-form .action-btn.save-btn {
-  color: #28a745;
+  color: var(--tag-save-btn);
 }
 
 .tag-edit-form .action-btn.save-btn:hover {
-  background-color: #d4edda;
+  background-color: var(--tag-save-btn-hover);
 }
 
 .tag-edit-form .action-btn.cancel-btn {
-  color: #dc3545;
+  color: var(--tag-cancel-btn);
 }
 
 .tag-edit-form .action-btn.cancel-btn:hover {
-  background-color: #f8d7da;
+  background-color: var(--tag-cancel-btn-hover);
 }
 

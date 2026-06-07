@@ -10,7 +10,7 @@ import { Task, CreateTaskDTO, UpdateTaskDTO, TaskTag } from './types';
 import CalendarStrip, { CalendarStripRef } from './components/CalendarStrip';
 import TaskModal from './components/TaskModal';
 import TaskList from './components/TaskList';
-import { ChevronLeft, ChevronRight, Home, Upload, Download, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Upload, Download, RefreshCw, AlertTriangle, Moon, Sun } from 'lucide-react';
 import TagManager from './components/TagManager';
 
 const App: React.FC = () => {
@@ -28,6 +28,24 @@ const App: React.FC = () => {
   });
   const [remoteUpdatesAvailable, setRemoteUpdatesAvailable] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
+
+  // === Темная тема ===
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(prev => !prev);
 
   // === Состояния для тегов ===
   const [allTags, setAllTags] = useState<TaskTag[]>([]);
@@ -424,6 +442,9 @@ const App: React.FC = () => {
             <h1>Календарь задач</h1>
           </div>
           <div className="nav-buttons">
+            <button className="nav-btn theme-toggle-btn" onClick={toggleTheme} title={isDark ? 'Светлая тема' : 'Темная тема'}>
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button className="nav-btn" onClick={() => calendarRef.current?.scrollLeft()}>
               <ChevronLeft size={20} />
             </button>
