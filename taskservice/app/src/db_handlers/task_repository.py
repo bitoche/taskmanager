@@ -56,18 +56,29 @@ def insert_task(task_dto: CreateTaskDTO):
     return res
 
 def update_task(upd_task_dto: UpdateTaskDTO):
-    task_d = {
+    # собираем все поля кроме task_id и приватных
+    all_fields = {
         k:v 
         for k,v 
         in vars(upd_task_dto).items() 
         if not k.startswith('_') 
         and not callable(k) 
-        and v is not None
         and k != 'task_id'
+    }
+    # фильтруем None значения, кроме closed_dttm - его можно обнулять
+    task_d = {
+        k:v 
+        for k,v in all_fields.items()
+        if v is not None or k == 'closed_dttm'
     }
     assert len(task_d)>0, f'update must contain at least one attr: {upd_task_dto}'
     with get_db() as conn:
-        sets = [f'"{k}" = \'{v}\'' for k,v in task_d.items()]
+        sets = []
+        for k,v in task_d.items():
+            if v is None:
+                sets.append(f'"{k}" = NULL')
+            else:
+                sets.append(f'"{k}" = \'{v}\'')
         res = conn.sql(f"""
             UPDATE "tasks"
             SET {', '.join(sets)}

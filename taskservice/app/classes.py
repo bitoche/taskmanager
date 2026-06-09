@@ -57,7 +57,7 @@ class UpdateTaskDTO(BaseModel):
     description: Optional[str] = None
     link_to_taskmanager: Optional[str] = None
     due_date: str = None
-    closed_date: Optional[str] = None
+    closed_dttm: Optional[str] = None
     task_status: Optional[int] = None
 
 @dataclass
