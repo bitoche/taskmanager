@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, TaskComment, TaskTag } from '../types';
 import { fetchTaskComments, addTaskComment, deleteTaskComment } from '../api';
-import { X, Send, Trash2, Plus, Tag, MessageSquare, FileText, ExternalLink, Calendar, Check, /*ChevronDown*/ } from 'lucide-react';
+import { X, Send, Trash2, Plus, Tag, MessageSquare, FileText, ExternalLink, Calendar, Check } from 'lucide-react';
+import { MarkdownEditor, renderMarkdown } from './MarkdownEditor';
 import './TaskModal.css';
 
 interface Props {
@@ -172,10 +173,10 @@ const TaskModal: React.FC<Props> = ({
               </div>
               <div className="form-group">
                 <label>Описание</label>
-                <textarea
+                <MarkdownEditor
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Подробности задачи..."
+                  onChange={setDescription}
+                  placeholder="Подробности задачи... Поддерживается Markdown"
                   rows={3}
                 />
               </div>
@@ -297,7 +298,10 @@ const TaskModal: React.FC<Props> = ({
                     ) : (
                       comments.map(comment => (
                         <div key={comment.comment_id} className="comment-item">
-                          <div className="comment-text">{comment.text}</div>
+                          <div 
+                            className="comment-text"
+                            dangerouslySetInnerHTML={{ __html: renderMarkdown(comment.text) }}
+                          />
                           <div className="comment-meta">
                             <span>{new Date(comment.created_at).toLocaleString()}</span>
                             <button
@@ -314,11 +318,11 @@ const TaskModal: React.FC<Props> = ({
                     )}
                   </div>
                   <div className="new-comment">
-                    <textarea
-                      rows={2}
+                    <MarkdownEditor
                       value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      placeholder="Напишите комментарий..."
+                      onChange={setNewCommentText}
+                      placeholder="Напишите комментарий... Поддерживается Markdown"
+                      rows={2}
                     />
                     <button
                       type="button"

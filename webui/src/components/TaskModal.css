@@ -486,6 +486,30 @@
   color: var(--comment-text);
 }
 
+/* Стили для Markdown Editor - переопределение глобальных стилей */
+.markdown-editor .markdown-textarea {
+  width: 100% !important;
+  padding: 12px !important;
+  border: 1px solid var(--input-border) !important;
+  border-top: 0 !important;
+  /* border-left: 0 !important; */
+  /* border-right: 0 !important; */
+  border-radius: 0 0 12px 12px !important;
+  font-family: inherit !important;
+  font-size: 0.9rem !important;
+  resize: none !important;
+  background: var(--input-bg) !important;
+  color: var(--comment-text) !important;
+  line-height: 1.5 !important;
+  min-height: 80px !important;
+}
+
+.markdown-editor .markdown-textarea:focus {
+  outline: none !important;
+  border-bottom-color: var(--input-focus-border) !important;
+  box-shadow: none !important;
+}
+
 .send-comment-btn {
   align-self: flex-end;
   background: #3b82f6;
