@@ -6,3 +6,4 @@ tasks.db
 *.log
 
 node_modules
+.idea
