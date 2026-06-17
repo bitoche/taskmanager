@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, ExternalLink, AlertCircle/*, X*/ } from 'lucide-react';
+import { CheckCircle2, ExternalLink, AlertCircle, Gauge/*, X*/ } from 'lucide-react';
 import { Task, TaskTag } from '../types';
 import TaskTags from './TaskTags';
 
@@ -136,6 +136,7 @@ const DayCard: React.FC<Props> = ({
             const overdue = getOverdueDays(task.due_date);
             const isCompleted = task.task_status === 2;
             const isActive = task.task_status === 1;
+            const overdueClosed = (task as any).overdueClosed || 0;
             const hasLink = task.link_to_taskmanager && task.link_to_taskmanager.trim() !== '';
             const taskTags = taskTagsMap?.get(task.task_id) || [];
 
@@ -144,6 +145,12 @@ const DayCard: React.FC<Props> = ({
               badge = (
                 <span title={`Дней просрочки: ${overdue}`} className="overdue-badge">
                   <AlertCircle size={12} /> {overdue}
+                </span>
+              );
+            } else if (isCompleted && overdueClosed > 0) {
+              badge = (
+                <span title={`Дней просрочки при закрытии: ${overdueClosed}`} className="overdue-badge-closed">
+                  <Gauge size={12}/> {overdueClosed}
                 </span>
               );
             }

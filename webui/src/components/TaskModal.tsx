@@ -147,7 +147,7 @@ const TaskModal: React.FC<Props> = ({
     <div className="task-modal-overlay" onClick={onClose}>
       <div className="task-modal-container" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         <div className="task-modal-header">
-          <h3>{task ? 'Редактирование задачи' : 'Новая задача'}</h3>
+          <h3>{task ? `Редактирование задачи #${task.task_id}` : 'Новая задача'}</h3>
           <button className="task-modal-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -170,6 +170,7 @@ const TaskModal: React.FC<Props> = ({
                   placeholder="Купить молоко"
                   autoFocus
                 />
+                {task && <div className="task-id-hint">ID задачи: #{task.task_id}</div>}
               </div>
               <div className="form-group">
                 <label>Описание</label>

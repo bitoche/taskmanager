@@ -21,6 +21,23 @@ interface Props {
   onDeleteTask: (task: Task) => void;
 }
 
+// Глобальный фильтр по всем полям таски
+function globalFilterFn(row: any, _columnId: string, filterValue: string) {
+  const search = filterValue.toLowerCase();
+  if (!search) return true;
+  const task = row.original as any;
+  const fields = [
+    String(task.task_id ?? ''),
+    task.title ?? '',
+    task.description ?? '',
+    task.link_to_taskmanager ?? '',
+    task.due_date ?? '',
+    task.closed_dttm ?? '',
+    task.task_status != null ? String(task.task_status) : '',
+  ];
+  return fields.some(f => f.toLowerCase().includes(search));
+}
+
 const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditTask, onDeleteTask }) => {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([
@@ -41,20 +58,32 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
         const diffDays = Math.ceil((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
         overdue = diffDays > 0 ? diffDays : 0;
       }
-      return { ...task, isCompleted, overdue };
+      // Просрочка при закрытии: задача завершена, closed_dttm заполнено, считаем сколько дней прошло от due_date до закрытия
+      let overdueClosed = 0;
+      if (isCompleted && task.due_date && task.closed_dttm) {
+        const parts = task.due_date.split('-');
+        const due = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const closed = new Date(task.closed_dttm);
+        const diffDays = Math.ceil((closed.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))-1;
+        overdueClosed = diffDays > 0 ? diffDays : 0;
+      }
+      return { ...task, isCompleted, overdue, overdueClosed };
     });
   }, [tasks]);
 
-  const columns = useMemo<ColumnDef<Task & { isCompleted: boolean; overdue: number }>[]>(
+  const columns = useMemo<ColumnDef<Task & { isCompleted: boolean; overdue: number; overdueClosed: number }>[]>(
     () => [
       {
         accessorKey: 'title',
         header: 'Название',
         size: 300,
         minSize: 150,
+        meta: {
+          className: 'task-title-td',
+        },
         cell: info => (
           <div className="task-title-cell" title={info.row.original.description || 'Нет описания'}>
-            {info.getValue() as string}
+            <div className="task-id-place">#{info.row.original.task_id}</div> {info.getValue() as string}
           </div>
         ),
       },
@@ -67,7 +96,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
           const createdAt = info.getValue() as string | null;
           const formatted = createdAt ? new Date(createdAt).toLocaleDateString('ru-RU') : '—';
           return (
-            <div className="task-created-cell" title={info.row.original.description || 'Нет описания'}>
+            <div className="task-created-cell" title={createdAt || 'Нет даты'}>
               {formatted}
             </div>
           );
@@ -81,13 +110,45 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
         cell: info => {
           const dueDate = info.getValue() as string | null;
           const overdue = info.row.original.overdue;
+          const overdueClosed = info.row.original.overdueClosed;
+          const isCompleted = info.row.original.isCompleted;
+          const formatted = dueDate ? new Date(dueDate + 'T00:00:00').toLocaleDateString('ru-RU') : '—';
+
+          // Определяем состояние даты
+          let dueDateState: 'overdue' | 'overdueClosed' | 'normal' | null = null;
+          let tooltipText = '';
+          if (overdue > 0 && !isCompleted) {
+            dueDateState = 'overdue';
+            tooltipText = `Просрочена на ${overdue} дн.`;
+          } else if (overdueClosed > 0 && isCompleted) {
+            dueDateState = 'overdueClosed';
+            tooltipText = `Закрыта с опозданием на ${overdueClosed} дн.`;
+          }
+
           return (
-            <div className="task-date-cell" title={info.row.original.description || 'Нет описания'}>
-              {dueDate || '—'}
-              {overdue > 0 && (
-                <span className="overdue-badge-list">
-                  <AlertCircle size={12} /> опоздание на {overdue} дн.
-                </span>
+            <div
+              className="task-date-cell"
+              title={dueDate || 'Нет даты'}
+            >
+              {dueDate ? (
+                <div
+                  className={`date-badge ${dueDateState === 'overdue' ? 'date-badge-overdue' : ''} ${dueDateState === 'overdueClosed' ? 'date-badge-overdue-closed' : ''}`}
+                  title={tooltipText || dueDate}
+                >
+                  {dueDateState === 'overdue' && (
+                    <span className="date-badge-icon">
+                      <AlertCircle size={14} />{overdue}
+                    </span>
+                  )}
+                  {dueDateState === 'overdueClosed' && (
+                    <span className="date-badge-icon date-badge-icon-closed">
+                      <AlertCircle size={14} />{overdueClosed}
+                    </span>
+                  )}
+                  <span className="date-badge-text">{formatted}</span>
+                </div>
+              ) : (
+                <span className="date-placeholder">—</span>
               )}
             </div>
           );
@@ -102,6 +163,10 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
         cell: info => {
           const link = info.row.original.link_to_taskmanager;
           if (!link) return null;
+          const parts = link.split('/').filter(Boolean);
+          let lastPartCalc = parts[parts.length - 1] || '';
+          if ( /^\d+$/.test(lastPartCalc) ) {} else {lastPartCalc = ''} // убираем подпись, если не получилось число
+          const lastPart = lastPartCalc
           return (
             <div className="task-link-cell">
               <a
@@ -112,6 +177,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
                 title="Открыть во внешнем менеджере"
               >
                 <ExternalLink size={16} />
+                {lastPart && <small>{lastPart}</small>}
               </a>
             </div>
           );
@@ -126,6 +192,21 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
           return (
             <div className="task-status-cell" title={info.row.original.description || 'Нет описания'}>
               {isCompleted ? '✅ Выполнена' : '🟢 Активна'}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'closed_dttm',
+        header: 'Дата завершения',
+        size: 150,
+        minSize: 100,
+        cell: info => {
+          const closedDttm = info.getValue() as string | null;
+          const formatted = closedDttm ? new Date(closedDttm).toLocaleDateString('ru-RU') : '—';
+          return (
+            <div className="task-closed-cell" title={closedDttm || 'Нет даты завершения'}>
+              {formatted}
             </div>
           );
         },
@@ -198,6 +279,7 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
     columnResizeMode,
     enableMultiSort: true,
     enableSorting: true,
+    globalFilterFn,
   });
 
   return (
@@ -261,11 +343,18 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
                   className={`task-row ${row.original.isCompleted ? 'completed-row' : ''}`}
                   onClick={() => onTaskClick(row.original)}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} style={{ width: cell.column.getSize() }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map(cell => {
+                    const meta = cell.column.columnDef.meta as { className?: string } | undefined;
+                    return (
+                      <td
+                        key={cell.id}
+                        className={meta?.className || ''}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}

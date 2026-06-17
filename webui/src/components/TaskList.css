@@ -24,6 +24,8 @@
   --task-list-no-tasks: #64748b;
   --task-list-resizer: rgba(0, 0, 0, 0.2);
   --task-list-resizer-active: #3b82f6;
+  --task-list-overdue-closed-bg: #ffc107;
+  --task-list-overdue-closed-text: #212529;
 }
 
 .dark {
@@ -52,6 +54,8 @@
   --task-list-no-tasks: #808090;
   --task-list-resizer: rgba(255, 255, 255, 0.2);
   --task-list-resizer-active: #5b7cfa;
+  --task-list-overdue-closed-bg: #d4a006;
+  --task-list-overdue-closed-text: #1a1a1a;
 }
 
 .task-list-container {
@@ -145,6 +149,9 @@
   color: var(--task-list-header);
   transition: border-color 0.3s ease, color 0.3s ease;
 }
+.task-list-table td {
+  justify-items: center;
+}
 
 /* Визуальные разделители между столбцами — лёгкая вертикальная линия при наведении */
 .task-list-table td:not(:last-child),
@@ -177,20 +184,30 @@
 
 /* Колонка "Название" – убираем скачки, используем подсказку при наведении */
 .task-title-cell {
+  display: inline-flex;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: help;
+  align-items: center;
+}
+.task-id-place {
+  background-color: var(--today-card-bg);
+  border-radius: 6px;
+  padding: 2px 4px;
 }
 
-/* Остальные колонки тоже обрезаются */
+/* Колонки с датами — единый стиль */
 .task-date-cell,
 .task-created-cell,
-.task-status-cell,
-.task-link-cell {
+.task-closed-cell {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Колонка ссылки – небольшая ширина, без ресайза */
@@ -255,7 +272,81 @@
   color: var(--task-list-status-incomplete);
 }
 
-/* Бейдж просрочки */
+/* Ячейка даты — компактный вертикальный layout */
+.task-date-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 28px;
+  justify-content: center;
+}
+
+/* Бейдж-дата */
+.date-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--task-list-border);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  cursor: default;
+  line-height: 1;
+  font-size: small;
+}
+
+.date-badge:hover {
+  background: var(--task-list-search-bg);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.date-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1px;
+  color: #dc3545;
+}
+
+.date-badge-icon-closed {
+  color: var(--task-list-overdue-closed-bg);
+}
+
+.date-badge-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Просроченная дата */
+.date-badge-overdue {
+  background: rgba(220, 53, 69, 0.12);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.date-badge-overdue:hover {
+  background: rgba(220, 53, 69, 0.2);
+}
+
+/* Просрочка при закрытии */
+.date-badge-overdue-closed {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.date-badge-overdue-closed:hover {
+  background: rgba(255, 193, 7, 0.25);
+}
+
+/* Заглушка для пустой даты */
+.date-placeholder {
+  color: var(--task-list-no-tasks);
+  font-style: italic;
+}
+
+/* Бейдж просрочки (оставляем для совместимости, но больше не используем) */
 .overdue-badge-list {
   background: #dc3545;
   color: white;
@@ -263,6 +354,18 @@
   padding: 2px 8px;
   border-radius: 20px;
   margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Бейдж просрочки при закрытии (желтый) */
+.overdue-badge-closed {
+  background: var(--task-list-overdue-closed-bg);
+  color: var(--task-list-overdue-closed-text);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
   display: inline-flex;
   align-items: center;
   gap: 4px;

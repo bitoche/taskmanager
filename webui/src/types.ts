@@ -4,7 +4,7 @@ export interface Task {
   description?: string | null ;
   link_to_taskmanager?: string | null;
   due_date?: string | null;        // YYYY-MM-DD
-  created_at?: string;             // ISO datetime
+  closed_dttm?: string | null;     // ISO datetime закрытия
   task_status?: number | null;
 }
 
