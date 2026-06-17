@@ -313,7 +313,23 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       if (task.due_date) {
         originalKey = task.due_date.slice(0, 10);
       }
+      const isCompleted = task.task_status === 2;
       const isActive = task.task_status === 1;
+      
+      // Определяем целевую дату отображения
+      let targetKey: string;
+      if (isCompleted && task.closed_dttm) {
+        // Завершённая задача с closed_dttm — показываем на дате закрытия
+        targetKey = task.closed_dttm.slice(0, 10);
+      } else if (originalKey && isActive) {
+        // Активная просроченная задача — показываем на сегодня
+        const parts = originalKey.split('-');
+        const dueDateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        targetKey = dueDateObj < today ? todayKey : originalKey;
+      } else {
+        targetKey = originalKey;
+      }
+      
       let isOverdue = false;
       if (originalKey && isActive) {
         const parts = originalKey.split('-');
@@ -321,13 +337,23 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
         isOverdue = dueDateObj < today;
       }
       
-      const targetKey = (isActive && isOverdue) ? todayKey : originalKey;
-      
+      // Показываем основную таску
       if (loadedDateKeys.has(targetKey) || targetKey === '') {
         if (!map.has(targetKey)) map.set(targetKey, []);
-        map.get(targetKey)!.push({ ...task, isGhost: false });
+        // Вычисляем overdueClosed для календаря
+        const isCompleted = task.task_status === 2;
+        let overdueClosed = 0;
+        if (isCompleted && task.due_date && task.closed_dttm) {
+          const parts = task.due_date.split('-');
+          const due = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          const closed = new Date(task.closed_dttm);
+          const diffDays = Math.ceil((closed.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+          overdueClosed = diffDays > 0 ? diffDays : 0;
+        }
+        map.get(targetKey)!.push({ ...task, isGhost: false, overdueClosed });
       }
       
+      // Ghost-таска только для активных просроченных задач (не завершённых)
       if (isActive && isOverdue && originalKey && originalKey !== targetKey && loadedDateKeys.has(originalKey)) {
         if (!map.has(originalKey)) map.set(originalKey, []);
         map.get(originalKey)!.push({

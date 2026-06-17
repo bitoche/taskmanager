@@ -356,9 +356,16 @@ body {
 .task-title {
   font-weight: 600;
   font-size: 0.85rem;
+  /* display: flex; */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.task-title-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 .task-item:active {
   cursor: grabbing;
@@ -366,6 +373,17 @@ body {
 .overdue-badge {
   background: #dc3545;
   color: white;
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.overdue-badge-closed {
+  background: #ffc107;
+  color: #212529;
   font-size: 0.65rem;
   padding: 2px 8px;
   border-radius: 20px;

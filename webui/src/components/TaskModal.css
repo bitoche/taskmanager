@@ -586,6 +586,13 @@
   background: var(--btn-danger-hover);
 }
 
+.task-id-hint {
+  font-size: 0.75rem;
+  color: var(--empty-hint);
+  margin-top: 4px;
+  font-family: monospace;
+}
+
 /* Анимации */
 @keyframes fadeIn {
   from { opacity: 0; }
