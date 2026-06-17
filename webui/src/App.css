@@ -40,6 +40,18 @@
   --today-card-bg: linear-gradient(135deg, #ffefcf, #ffe2b5);
   --today-card-border: #ffb347;
   --today-card-date: #b45f1b;
+  --weekend-bg: repeating-linear-gradient(135deg, rgba(200, 210, 220, 0.08) 0px, rgba(200, 210, 220, 0.08) 2px, transparent 2px, transparent 4px);
+  --weekend-border: #d0d8e0;
+  --weekend-date: #6a7a8a;
+  --weekend-weekday: #6a7a8a;
+  --bg-weekend: rgba(245, 247, 250, 0.6);
+  --bg-weekend-tag: #e8eef4;
+  --holiday-bg: repeating-linear-gradient(135deg, rgba(255, 200, 200, 0.1) 0px, rgba(255, 200, 200, 0.1) 2px, transparent 2px, transparent 4px);
+  --holiday-border: #e8c8c8;
+  --holiday-date: #a06060;
+  --holiday-weekday: #a06060;
+  --bg-holiday: rgba(255, 245, 245, 0.7);
+  --bg-holiday-tag: #f5e8e8;
   --title-gradient: linear-gradient(135deg, #1e2a3a, #0f1a24);
   --controls-bg: #1f2c33c9;
   --controls-text: #f0f6fa;
@@ -88,6 +100,18 @@
   --today-card-bg: linear-gradient(135deg, #4a3a2a, #5a4a3a);
   --today-card-border: #c98a2e;
   --today-card-date: #ffb347;
+  --weekend-bg: repeating-linear-gradient(135deg, rgba(80, 90, 100, 0.15) 0px, rgba(80, 90, 100, 0.15) 2px, transparent 2px, transparent 4px);
+  --weekend-border: #3a4a5a;
+  --weekend-date: #5a6a7a;
+  --weekend-weekday: #5a6a7a;
+  --bg-weekend: rgba(40, 45, 50, 0.6);
+  --bg-weekend-tag: #2a3038;
+  --holiday-bg: repeating-linear-gradient(135deg, rgba(150, 80, 80, 0.15) 0px, rgba(150, 80, 80, 0.15) 2px, transparent 2px, transparent 4px);
+  --holiday-border: #5a3a3a;
+  --holiday-date: #a06060;
+  --holiday-weekday: #a06060;
+  --bg-holiday: rgba(50, 35, 35, 0.6);
+  --bg-holiday-tag: #3a2828;
   --title-gradient: linear-gradient(135deg, #e0e0e0, #c0c0d0);
   --controls-bg: #2d2d44c9;
   --controls-text: #e0e0e0;
@@ -238,6 +262,16 @@ body {
   margin-top: 6px;
   transition: color 0.3s ease, background 0.3s ease;
 }
+.holiday-name {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-hint);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s ease;
+}
 .month-hint {
   font-size: 0.75rem;
   color: var(--text-hint);
@@ -251,6 +285,39 @@ body {
   border: 2px solid var(--today-card-border);
 }
 .today-card .date { color: var(--today-card-date); }
+
+/* Выходные дни — незаметная штриховка */
+.day-card.weekend-card {
+  background: var(--bg-weekend), var(--weekend-bg);
+  background-blend-mode: overlay;
+  border: 2px solid var(--weekend-border);
+}
+.weekend-card .date { color: var(--weekend-date); }
+.weekend-card .weekday {
+  background: var(--bg-weekend-tag);
+  color: var(--weekend-weekday);
+}
+
+/* Праздничные дни — незаметная штриховка */
+.day-card.holiday-card {
+  background: var(--bg-holiday), var(--holiday-bg);
+  background-blend-mode: overlay;
+  border: 2px solid var(--holiday-border);
+}
+.holiday-card .date { color: var(--holiday-date); }
+.holiday-card .weekday {
+  background: var(--bg-holiday-tag);
+  color: var(--holiday-weekday);
+}
+.holiday-card .holiday-name {
+  color: var(--holiday-weekday);
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Список задач */
 .tasks-list {
@@ -788,6 +855,11 @@ footer {
 .toast-error {
   background: var(--bg-toast-error);
   color: #b91c1c;
+}
+.toast-holidays {
+  background: rgba(100, 150, 200, 0.7);
+  color: white;
+  backdrop-filter: blur(6px);
 }
 .toast-loading {
   background: #e0e7ff;

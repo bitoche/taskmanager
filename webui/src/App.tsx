@@ -28,6 +28,7 @@ const App: React.FC = () => {
   });
   const [remoteUpdatesAvailable, setRemoteUpdatesAvailable] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const isFirstRender = useRef(true);
 
   // === Темная тема ===
   const [isDark, setIsDark] = useState(() => {
@@ -56,7 +57,7 @@ const App: React.FC = () => {
   type Toast = {
     id: string;
     uniqueId: string;
-    type: 'info' | 'warning' | 'error';
+    type: 'info' | 'warning' | 'error' | 'holidays';
     message: React.ReactNode;
     action?: { label: string; handler: () => void };
   };
@@ -188,6 +189,13 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // === Инициализация: загружаем данные только один раз при старте (без синхронизации) ===
   useEffect(() => {
     const today = new Date();
@@ -216,14 +224,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // === Остальные обработчики (устанавливают флаг hasUnsavedChanges) ===
-  const formatLocalDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   // === Функция проверки обновлений с индикатором ===
   const checkRemoteUpdatesHandler = useCallback(async () => {
     if (remoteUpdatesAvailable) return; // Уже есть изменения в облаке, проверять нет смысла
@@ -237,24 +237,32 @@ const App: React.FC = () => {
       setTimeout(() => setCheckingUpdates(false), 1000);
     }
   }, [remoteUpdatesAvailable]);
+  
   useEffect(() => {
     checkRemoteUpdatesHandler();
     const interval = setInterval(checkRemoteUpdatesHandler, 10000);
     return () => clearInterval(interval);
   }, [checkRemoteUpdatesHandler]);
 
-  // Toast для проверки обновлений
+  // Toast для проверки обновлений (только после первого рендера)
   useEffect(() => {
+    if (isFirstRender.current) return;
     if (checkingUpdates) {
       addToast('checking', { type: 'info', message: <><RefreshCw size={16} className="spin-icon"/></> });
     }
   }, [checkingUpdates, addToast]);
 
   useEffect(() => {
+    if (isFirstRender.current) return;
     if (!checkingUpdates) {
       removeToast('checking');
     }
   }, [checkingUpdates, removeToast]);
+
+  // Mark first render as done
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
 
   // Toast для доступных обновлений в облаке
   useEffect(() => {
@@ -463,6 +471,13 @@ const App: React.FC = () => {
           onToggleStatus={handleToggleStatus}
           taskTagsMap={taskTagsMap}
           onRemoveTag={handleRemoveTagFromTask}
+          onHolidaysLoadingChange={(loading) => {
+            if (loading) {
+              addToast('holidays-loading', { type: 'holidays', message: <><RefreshCw size={16} className="spin-icon" /><div className='toast-text'>Загружаем праздники...</div></> });
+            } else {
+              removeToast('holidays-loading');
+            }
+          }}
         />
         <TagManager
           allTags={allTags}

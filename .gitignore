@@ -7,3 +7,5 @@ tasks.db
 
 node_modules
 .idea
+
+webui/dist

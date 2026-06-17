@@ -9,6 +9,7 @@ import {
 
 import DayCard from './DayCard';
 import { Task, TaskTag } from '../types';
+import { getDaysInfo, getLocalWeekends } from '../holidays';
 import './CalendarStrip.css';
 
 const INITIAL_DAYS_BEFORE = 7;
@@ -42,7 +43,8 @@ interface Props {
   onLoadRange: (from: string, to: string) => Promise<Task[]>;
   onToggleStatus: (taskId: number, newStatus: number) => void;
   taskTagsMap?: Map<number, TaskTag[]>;
-  onRemoveTag?: (taskId: number, tagId: number) => void; // только удаление, назначение и создание тегов не используются
+  onRemoveTag?: (taskId: number, tagId: number) => void;
+  onHolidaysLoadingChange?: (loading: boolean) => void; // callback для тоста
 }
 
 export interface CalendarStripRef {
@@ -60,6 +62,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   onToggleStatus,
   taskTagsMap,
   onRemoveTag,
+  onHolidaysLoadingChange,
   // onAssignTag, allTags, onCreateTag – удалены, т.к. не используются
 }, ref) => {
   const [dates, setDates] = useState<Date[]>([]);
@@ -67,6 +70,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
   const [loadingLeft, setLoadingLeft] = useState(false);
   const [loadingRight, setLoadingRight] = useState(false);
+  const [daysOffMap, setDaysOffMap] = useState<Map<string, boolean>>(new Map());
   
   const stripRef = useRef<HTMLDivElement>(null);
   const datesRef = useRef<Date[]>([]);
@@ -100,8 +104,31 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     setLoadedDateKeys(new Set(newDates.map((d) => formatLocalDate(d))));
     onLoadRange(formatLocalDate(start), formatLocalDate(end));
 
+    // Сначала загружаем локальные выходные (суббота, воскресенье)
+    const localWeekends = getLocalWeekends(start, end);
+    setDaysOffMap(localWeekends);
+    
+    // Показываем индикатор загрузки праздников
+    onHolidaysLoadingChange?.(true);
+    
+    // Загружаем информацию о выходных/праздниках через API
+    getDaysInfo(start, end).then(map => {
+      // Объединяем: API данные + локальные выходные (если API не вернул данные)
+      setDaysOffMap(prev => {
+        const merged = new Map(prev);
+        map.forEach((isDayOff, dateStr) => {
+          merged.set(dateStr, isDayOff);
+        });
+        return merged;
+      });
+      onHolidaysLoadingChange?.(false);
+    }).catch(err => {
+      console.error('Failed to load holidays:', err);
+      onHolidaysLoadingChange?.(false);
+    });
+
     initialized.current = true;
-  }, [onLoadRange]);
+  }, [onLoadRange, onHolidaysLoadingChange]);
 
   // Прокрутка к сегодняшнему дню (после загрузки данных)
   useEffect(() => {
@@ -152,6 +179,16 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     const toKey = formatLocalDate(addDays(firstDate, -1));
     await onLoadRange(fromKey, toKey);
 
+    // Загружаем информацию о выходных/праздниках для нового диапазона
+    onHolidaysLoadingChange?.(true);
+    getDaysInfo(newFirst, firstDate).then(map => {
+      setDaysOffMap(prev => new Map([...prev, ...map]));
+      onHolidaysLoadingChange?.(false);
+    }).catch(err => {
+      console.error('Failed to load holidays:', err);
+      onHolidaysLoadingChange?.(false);
+    });
+
     if (stripRef.current) {
       stripRef.current.scrollLeft = oldScrollLeft + addedWidth;
     }
@@ -186,6 +223,16 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     const fromKey = formatLocalDate(addDays(lastDate, 1));
     const toKey = formatLocalDate(newLast);
     await onLoadRange(fromKey, toKey);
+    
+    // Загружаем информацию о выходных/праздниках для нового диапазона
+    onHolidaysLoadingChange?.(true);
+    getDaysInfo(lastDate, newLast).then(map => {
+      setDaysOffMap(prev => new Map([...prev, ...map]));
+      onHolidaysLoadingChange?.(false);
+    }).catch(err => {
+      console.error('Failed to load holidays:', err);
+      onHolidaysLoadingChange?.(false);
+    });
     
     setLoadingRight(false);
   }, [dates, onLoadRange, loadingRight]);
@@ -343,6 +390,8 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
           {dates.map((date) => {
             const dateStr = formatLocalDate(date);
             const tasksForDay = [...(taskMap.get(dateStr) || [])];
+            const isDayOff = daysOffMap.get(dateStr) || false;
+            const holiday = isDayOff ? { date: dateStr, isDayOff: true } : null;
             return (
               <DayCard
                 key={dateStr}
@@ -358,6 +407,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
                 highlightedTaskId={highlightedTaskId}
                 taskTagsMap={taskTagsMap}
                 onRemoveTagFromTask={onRemoveTag}
+                holiday={holiday}
               />
             );
           })}

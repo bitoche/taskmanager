@@ -16,6 +16,7 @@ interface Props {
   dateStr: string;
   highlightedTaskId?: number | null;
   taskTagsMap?: Map<number, TaskTag[]>; // карта тегов задачи
+  holiday?: { date: string; isDayOff: boolean } | null; // выходной/праздник
 }
 
 function formatDisplayDate(date: Date): string {
@@ -52,9 +53,12 @@ function getOverdueDays(dueDateStr: string | null | undefined): number {
 
 const DayCard: React.FC<Props> = ({ 
   date, tasks, isToday, onAddTask, onEditTask, onMoveTask, onToggleStatus, onGhostClick, dateStr, highlightedTaskId,
-  onRemoveTagFromTask, taskTagsMap
+  onRemoveTagFromTask, taskTagsMap, holiday
 }) => {
   
+  const weekend = holiday?.isDayOff || false;
+  const isHoliday = false;
+
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.task-item')) return;
     onAddTask();
@@ -94,11 +98,12 @@ const DayCard: React.FC<Props> = ({
 
   return (
     <div
-      className={`day-card ${isToday ? 'today-card' : ''}`}
+      className={`day-card ${isToday ? 'today-card' : ''} ${weekend ? 'weekend-card' : ''} ${isHoliday ? 'holiday-card' : ''}`}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onClick={handleCardClick}
       data-date={dateStr}
+      title={holiday?.isDayOff ? 'Выходной или праздничный день' : undefined}
     >
       <div className="day-header">
         <div className="date">{formatDisplayDate(date)}</div>
