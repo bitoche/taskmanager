@@ -4,7 +4,7 @@ services:
     container_name: taskservice
     command: sh -c "python -u -m app.api"
     ports:
-      - "8081:5000"
+      - "5000"
     volumes:
       - ./taskservice:/app
       - ./logs:/app/logs
