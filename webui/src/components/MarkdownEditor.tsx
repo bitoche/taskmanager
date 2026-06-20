@@ -67,6 +67,7 @@ interface MarkdownEditorProps {
   rows?: number;
   label?: string;
   className?: string;
+  defaultPreview?: boolean;
 }
 
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ 
@@ -75,9 +76,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   placeholder, 
   rows = 3, 
   label,
-  className 
+  className,
+  defaultPreview = false
 }) => {
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(defaultPreview);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertMarkdown = (before: string, after: string = '') => {

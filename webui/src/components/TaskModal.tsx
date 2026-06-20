@@ -179,6 +179,7 @@ const TaskModal: React.FC<Props> = ({
                   onChange={setDescription}
                   placeholder="Подробности задачи... Поддерживается Markdown"
                   rows={3}
+                  defaultPreview={true}
                 />
               </div>
               <div className="form-row">

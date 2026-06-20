@@ -222,6 +222,9 @@
   text-decoration: none;
   transition: color 0.3s ease;
 }
+.task-link-cell a:visited {
+  color: var(--task-list-link);
+}
 .task-link-cell a:hover {
   color: var(--task-list-link-hover);
 }

@@ -120,6 +120,10 @@
   text-decoration: underline;
 }
 
+.markdown-preview a:visited {
+  color: var(--add-tag-color);
+}
+
 .markdown-preview a:hover {
   text-decoration: none;
 }
