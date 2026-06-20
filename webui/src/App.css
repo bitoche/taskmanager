@@ -558,9 +558,9 @@ footer {
   font-weight: 500;
   cursor: default;
   background: var(--bg-tag);
-  color: var(--text-primary);
+  color: #000000;
   position: relative;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease;
 }
 .tag-remove-icon {
   cursor: pointer;
@@ -637,7 +637,7 @@ footer {
   background: var(--bg-tag-filter);
   cursor: pointer;
   font-size: 0.8rem;
-  transition: all 0.1s, background 0.3s ease, color 0.3s ease;
+  transition: all 0.1s, background 0.3s ease;
   color: var(--text-primary);
 }
 .tag-filter-item.active {
@@ -710,7 +710,7 @@ footer {
   margin: 4px;
   font-size: 0.8rem;
   background: var(--bg-tag);
-  color: var(--text-primary);
+  color: #000000;
 }
 .tag-chip svg {
   cursor: pointer;

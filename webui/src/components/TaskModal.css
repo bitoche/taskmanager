@@ -18,7 +18,7 @@
   --required-color: #ef4444;
   --icon-color: #94a3b8;
   --tag-bg: #f1f5f9;
-  --tag-color: #1e293b;
+  --tag-color: #000000;
   --add-tag-border: #cbd5e1;
   --add-tag-color: #3b82f6;
   --add-tag-hover: #f8fafc;
@@ -60,7 +60,7 @@
   --required-color: #ef4444;
   --icon-color: #606070;
   --tag-bg: #3a3a55;
-  --tag-color: #e0e0e0;
+  --tag-color: #000000;
   --add-tag-border: #4a4a6a;
   --add-tag-color: #5b7cfa;
   --add-tag-hover: #3a3a55;
