@@ -565,6 +565,9 @@ footer {
   position: relative;
   transition: background 0.3s ease;
 }
+.day-card-task-tag {
+  min-height: 14px;
+}
 .tag-remove-icon {
   cursor: pointer;
   opacity: 0;

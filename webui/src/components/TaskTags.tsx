@@ -20,7 +20,7 @@ const TaskTags: React.FC<Props> = ({ tags, onRemove, maxVisible = 3 }) => {
       {visibleTags.map(tag => (
         <div
           key={tag.task_tag_id}
-          className="task-tag"
+          className="task-tag day-card-task-tag"
           style={{ backgroundColor: tag.tag_color || '#e0e0e0' }}
           onMouseEnter={() => setHoveredTagId(tag.task_tag_id)}
           onMouseLeave={() => setHoveredTagId(null)}
