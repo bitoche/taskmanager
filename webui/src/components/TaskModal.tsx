@@ -133,12 +133,70 @@ const TaskModal: React.FC<Props> = ({
     try {
       await onCreateTag(newTagText.trim(), newTagColor);
       setNewTagText('');
-      setNewTagColor('#e0e0e0');
+      setNewTagColor('#4a90d9');
     } catch (err) {
       console.error(err);
     } finally {
       setCreatingTag(false);
     }
+  };
+
+  const cancelCreateTag = () => {
+    setNewTagText('');
+    setNewTagColor('#4a90d9');
+  };
+
+  // ==================== Вспомогательный компонент формы тега ====================
+  const TagForm: React.FC<{
+    value: string;
+    onChange: (v: string) => void;
+    color: string;
+    onColorChange: (v: string) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    saving: boolean;
+  }> = ({ value, onChange, color, onColorChange, onSave, onCancel, saving }) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => { inputRef.current?.focus(); inputRef.current?.select(); }, []);
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !saving) onSave();
+      if (e.key === 'Escape') onCancel();
+    };
+    return (
+      <div className="tag-editor-form">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Название тега"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <label className="tag-color-input" title="Цвет">
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => onColorChange(e.target.value)}
+          />
+          <span className="tag-color-swatch" style={{ backgroundColor: color }} />
+        </label>
+        <button
+          className="tag-editor-btn tag-editor-btn-save"
+          onClick={onSave}
+          disabled={saving}
+          title="Сохранить"
+        >
+          <Check size={16} />
+        </button>
+        <button
+          className="tag-editor-btn tag-editor-btn-cancel"
+          onClick={onCancel}
+          title="Отмена"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -263,23 +321,15 @@ const TaskModal: React.FC<Props> = ({
                           <div className="no-tags-msg">Все теги уже добавлены</div>
                         )}
                       </div>
-                      <div className="new-tag-row">
-                        <input
-                          type="text"
-                          placeholder="Новый тег"
-                          value={newTagText}
-                          onChange={(e) => setNewTagText(e.target.value)}
-                        />
-                        <input
-                          type="color"
-                          value={newTagColor}
-                          onChange={(e) => setNewTagColor(e.target.value)}
-                          title="Цвет тега"
-                        />
-                        <button type="button" onClick={handleCreateTag} disabled={creatingTag}>
-                          {creatingTag ? '...' : 'Создать'}
-                        </button>
-                      </div>
+                      <TagForm
+                        value={newTagText}
+                        onChange={setNewTagText}
+                        color={newTagColor}
+                        onColorChange={setNewTagColor}
+                        onSave={handleCreateTag}
+                        onCancel={cancelCreateTag}
+                        saving={creatingTag}
+                      />
                     </div>
                   )}
                 </div>

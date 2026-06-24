@@ -465,6 +465,9 @@ button {
 }
 button.primary { background: #007bff; color: white; }
 button.danger { background: #dc3545; color: white; }
+.mini-button {
+  padding: 4px 10px;
+}
 footer {
   text-align: center;
   margin-top: 1.5rem;

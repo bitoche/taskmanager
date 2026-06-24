@@ -1,123 +1,199 @@
-:root {
-  --tag-color-input-border: #ddd;
-  --tag-color-input-border-hover: #999;
-  --tag-color-input-shadow: rgba(0, 0, 0, 0.1);
-  --tag-edit-border: #ccc;
-  --tag-edit-border-focus: #999;
-  --tag-action-btn: #666;
-  --tag-action-btn-hover: #e8e8e8;
-  --tag-action-btn-hover-text: #333;
-  --tag-save-btn: #28a745;
-  --tag-save-btn-hover: #d4edda;
-  --tag-cancel-btn: #dc3545;
-  --tag-cancel-btn-hover: #f8d7da;
+ /* ==================== Менеджер тегов ==================== */
+
+.tag-manager {
+  background: var(--bg-tag-manager);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
-.dark {
-  --tag-color-input-border: #4a4a6a;
-  --tag-color-input-border-hover: #606070;
-  --tag-color-input-shadow: rgba(0, 0, 0, 0.3);
-  --tag-edit-border: #4a4a6a;
-  --tag-edit-border-focus: #606070;
-  --tag-action-btn: #808090;
-  --tag-action-btn-hover: #3a3a55;
-  --tag-action-btn-hover-text: #e0e0e0;
-  --tag-save-btn: #28a745;
-  --tag-save-btn-hover: rgba(40, 167, 69, 0.2);
-  --tag-cancel-btn: #dc3545;
-  --tag-cancel-btn-hover: rgba(220, 53, 69, 0.2);
+.tag-manager-title {
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-/* === Переиспользуемый класс для инпута цвета === */
-.color-input {
+/* ==================== Список тегов ==================== */
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ==================== Плашка тега (как в Days) ==================== */
+
+.task-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid var(--tag-color-input-border);
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  overflow: hidden;
-}
-
-.color-input:hover {
-  border-color: var(--tag-color-input-border-hover);
-  box-shadow: 0 2px 6px var(--tag-color-input-shadow);
-}
-
-.color-input input[type="color"] {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.color-input .color-swatch {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-}
-
-/* === Улучшенная tag-edit-form === */
-.tag-edit-form {
-  display: inline-flex;
-  align-items: center;
   gap: 4px;
-  padding: 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: default;
+  position: relative;
+  transition: background 0.2s ease;
+  min-height: 28px;
+  min-width: 28px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.task-tag-add {
+  border: 1px dashed var(--border-color);
   background: transparent;
-  border: none;
-}
-
-/* Сброс стилей для input */
-.tag-edit-form input[type="text"] {
-    border: 0.1px dotted var(--tag-edit-border);
-    outline: none;
-    background: none;
-    padding: 3px;
-    font-family: inherit;
-    border-radius: 4px;
-    transition: border 0.2s ease;
-    color: inherit;
-}
-
-/* При фокусе можно добавить лёгкий акцент, но без резкой обводки */
-.tag-edit-form input[type="text"]:focus {
-    border-color: var(--tag-edit-border-focus);
-}
-
-.tag-edit-form .action-btn {
-  background: none;
-  border: none;
+  color: var(--text-secondary);
   cursor: pointer;
+}
+
+.task-tag-add:hover {
+  border-color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #3b82f6);
+}
+
+.task-tag-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Активный тег */
+.task-tag-active {
+  color: white;
+}
+
+.task-tag-active .tag-action-btn {
+  color: white;
+}
+
+.task-tag-active .tag-action-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Иконки действий внутри тега */
+.tag-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.task-tag:hover .tag-actions {
+  display: inline-flex;
+}
+
+.tag-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 2px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
   border-radius: 4px;
-  transition: background-color 0.2s, color 0.2s;
-  color: var(--tag-action-btn);
+  transition: opacity 0.15s, background 0.15s;
+  line-height: 0;
+  flex-shrink: 0;
 }
 
-.tag-edit-form .action-btn:hover {
-  background-color: var(--tag-action-btn-hover);
-  color: var(--tag-action-btn-hover-text);
+.tag-action-btn svg {
+  width: 12px;
+  height: 12px;
 }
 
-.tag-edit-form .action-btn.save-btn {
-  color: var(--tag-save-btn);
+/* Переопределяем mini-button для тегов */
+.tag-action-btn.mini-button {
+  padding: 2px;
 }
 
-.tag-edit-form .action-btn.save-btn:hover {
-  background-color: var(--tag-save-btn-hover);
+.task-tag-editing .tag-action-btn svg {
+  width: 12px;
+  height: 12px;
 }
 
-.tag-edit-form .action-btn.cancel-btn {
-  color: var(--tag-cancel-btn);
+.tag-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-.tag-edit-form .action-btn.cancel-btn:hover {
-  background-color: var(--tag-cancel-btn-hover);
+.tag-action-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== Inline-форма редактирования ==================== */
+
+.task-tag-editing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--bg-element);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  vertical-align: top;
+  pointer-events: auto;
+}
+
+.task-tag-editing input[type="text"] {
+  width: 90px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-family: inherit;
+  outline: none;
+  height: 24px;
+  box-sizing: border-box;
+}
+
+.task-tag-editing input[type="text"]::placeholder {
+  color: var(--text-secondary);
+}
+
+.task-tag-editing input[type="text"]:focus {
+  background: var(--bg-element);
+  border: 1px solid var(--accent-color, #3b82f6);
+  border-radius: 8px;
+}
+
+/* Инпут цвета в форме */
+.tag-color-swatch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--border-color);
+  box-sizing: border-box;
+}
+
+.tag-color-swatch-btn input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.tag-color-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+  box-sizing: border-box;
 }
 

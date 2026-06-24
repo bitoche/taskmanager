@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TaskTag } from '../types';
-import { Plus, X, Check, Edit2 } from 'lucide-react';
+import { X, Check, Edit2, Trash2 } from 'lucide-react';
+import './TagManager.css';
 
 interface Props {
   allTags: TaskTag[];
@@ -8,32 +9,41 @@ interface Props {
   onFilterByTag: (tagId: number | null) => void;
   activeFilterTagId: number | null;
   onDeleteTagGlobally?: (tagId: number) => Promise<void>;
-  onUpdateTag?: (tagId: number, text: string, color: string) => Promise<void>; // новый проп
+  onUpdateTag?: (tagId: number, text: string, color: string) => Promise<void>;
 }
 
 const TagManager: React.FC<Props> = ({ 
   allTags, onCreateTag, onFilterByTag, activeFilterTagId, 
   onDeleteTagGlobally, onUpdateTag 
 }) => {
-  const [showCreator, setShowCreator] = useState(false);
-  const [newTagText, setNewTagText] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#e0e0e0');
   const [creating, setCreating] = useState(false);
+  const [createText, setCreateText] = useState('');
+  const [createColor, setCreateColor] = useState('#4a90d9');
 
-  // Состояния для редактирования
   const [editingTagId, setEditingTagId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const [editColor, setEditColor] = useState('');
   const [updating, setUpdating] = useState(false);
+  const editRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!editingTagId) return;
+    const handler = (e: MouseEvent) => {
+      if (editRef.current && !editRef.current.contains(e.target as Node)) {
+        setEditingTagId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [editingTagId]);
 
   const handleCreate = async () => {
-    if (!newTagText.trim()) return;
+    if (!createText.trim()) return;
     setCreating(true);
     try {
-      await onCreateTag(newTagText.trim(), newTagColor);
-      setNewTagText('');
-      setNewTagColor('#e0e0e0');
-      setShowCreator(false);
+      await onCreateTag(createText.trim(), createColor);
+      setCreateText('');
+      setCreateColor('#4a90d9');
     } catch (err) {
       console.error(err);
     } finally {
@@ -41,8 +51,7 @@ const TagManager: React.FC<Props> = ({
     }
   };
 
-  const handleDeleteTag = async (tagId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (tagId: number) => {
     if (!onDeleteTagGlobally) return;
     if (window.confirm('Удалить тег полностью? Он исчезнет у всех задач.')) {
       await onDeleteTagGlobally(tagId);
@@ -50,125 +59,211 @@ const TagManager: React.FC<Props> = ({
     }
   };
 
-  // Обработчик двойного клика – начать редактирование
-  const handleDoubleClick = (tag: TaskTag, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingTagId(tag.task_tag_id);
+  const startEdit = (tag: TaskTag) => {
     setEditText(tag.tag_text);
-    setEditColor(tag.tag_color || '#e0e0e0');
+    setEditColor(tag.tag_color || '#4a90d9');
+    setEditingTagId(tag.task_tag_id);
   };
 
-  // Сохранить изменения тега
-  const handleUpdateTag = async () => {
-    if (!onUpdateTag || editingTagId === null) return;
-    if (!editText.trim()) {
-      alert('Название тега не может быть пустым');
-      return;
-    }
+  const handleUpdate = async () => {
+    if (!onUpdateTag || editingTagId === null || !editText.trim()) return;
     setUpdating(true);
     try {
       await onUpdateTag(editingTagId, editText.trim(), editColor);
-      setEditingTagId(null);
     } catch (err) {
       console.error(err);
-      alert('Ошибка при обновлении тега');
     } finally {
       setUpdating(false);
     }
   };
 
-  // Отмена редактирования
-  const cancelEdit = () => {
-    setEditingTagId(null);
-  };
+  const isEditing = (id: number) => editingTagId !== null && id === editingTagId;
+  const isActive = (id: number) => activeFilterTagId === id;
 
   return (
     <div className="tag-manager">
-      <div className="tag-manager-header">
-        <h4>Теги</h4>
-        <button className="add-tag-btn" onClick={() => setShowCreator(!showCreator)}>
-          <Plus size={16} /> Новый тег
-        </button>
-      </div>
-      {showCreator && (
-        <div className="tag-creator">
-          <input
-            type="text"
-            placeholder="Название тега"
-            value={newTagText}
-            onChange={(e) => setNewTagText(e.target.value)}
-          />
-          <input
-            type="color"
-            value={newTagColor}
-            onChange={(e) => setNewTagColor(e.target.value)}
-            title="Цвет"
-          />
-          <button onClick={handleCreate} disabled={creating}>
-            {creating ? '...' : 'Создать'}
-          </button>
-        </div>
-      )}
-      <div className="tag-list">
-        <div
-          className={`tag-filter-item ${activeFilterTagId === null ? 'active' : ''}`}
+      <h4 className="tag-manager-title">Теги</h4>
+
+      <div className="tag-list" ref={editRef}>
+        {/* Фильтр "Все задачи" */}
+        <TagItem
+          color="#64748b"
+          text="Все задачи"
+          active={activeFilterTagId === null}
           onClick={() => onFilterByTag(null)}
-        >
-          Все задачи
-        </div>
-        {allTags.map(tag => (
-          <div
-            key={tag.task_tag_id}
-            className={`tag-filter-item ${activeFilterTagId === tag.task_tag_id ? 'active' : ''}`}
-            onClick={() => onFilterByTag(tag.task_tag_id)}
-            // onDoubleClick={(e) => handleDoubleClick(tag, e)}
-            title="Дабл-клик, чтобы изменить тег"
-          >
-            {editingTagId === tag.task_tag_id ? (
-              <>
-                <input
-                  type="text"
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  autoFocus
-                  size={10}
-                />
-                <label className="color-input" title="Цвет">
-                  <input
-                    type="color"
-                    value={editColor}
-                    onChange={(e) => setEditColor(e.target.value)}
-                  />
-                  <span className="color-swatch" style={{ backgroundColor: editColor }}></span>
-                </label>
-                <button className="action-btn save-btn" onClick={(e) => { e.stopPropagation(); handleUpdateTag(); }} disabled={updating}>
-                  <Check size={14} />
-                </button>
-                <button className="action-btn cancel-btn" onClick={(e) => { e.stopPropagation(); cancelEdit(); }}>
-                  <X size={14} />
-                </button>
-              </>
-            ) : (
-              <>
-                <span className="tag-color-dot" style={{ backgroundColor: tag.tag_color }}></span>
-                {tag.tag_text}
-                <Edit2
-                  size={14}
-                  className="tag-action-icon"
-                  onClick={(e) => handleDoubleClick(tag, e)}
-                />
-                {onDeleteTagGlobally && (
-                  <X
-                    size={14}
-                    className="tag-action-icon"
-                    onClick={(e) => handleDeleteTag(tag.task_tag_id, e)}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        ))}
+          disabled={!!editingTagId || creating}
+        />
+
+        {/* Теги */}
+        {allTags.map(tag => {
+          // Режим редактирования
+          if (isEditing(tag.task_tag_id)) {
+            return (
+              <TagEditItem
+                key={tag.task_tag_id}
+                initialText={editText}
+                initialColor={editColor}
+                onTextChange={setEditText}
+                onColorChange={setEditColor}
+                onSave={handleUpdate}
+                onCancel={() => setEditingTagId(null)}
+                saving={updating}
+              />
+            );
+          }
+
+          // Обычный тег
+          return (
+            <TagItem
+              key={tag.task_tag_id}
+              color={tag.tag_color}
+              text={tag.tag_text}
+              active={isActive(tag.task_tag_id)}
+              onClick={() => onFilterByTag(tag.task_tag_id)}
+              disabled={!!editingTagId || creating}
+              onEdit={() => startEdit(tag)}
+              onDelete={onDeleteTagGlobally ? () => handleDelete(tag.task_tag_id) : undefined}
+            />
+          );
+        })}
+
+        {/* Кнопка "+" */}
+        {!editingTagId && (
+          <TagItem color="#64748b" text="+" isAdd onClick={creating ? undefined : () => setCreating(true)} disabled={creating} />
+        )}
+
+        {/* Форма создания */}
+        {creating && (
+          <TagEditItem
+            key="new"
+            isNew
+            initialText={createText}
+            initialColor={createColor}
+            onTextChange={setCreateText}
+            onColorChange={setCreateColor}
+            onSave={handleCreate}
+            onCancel={() => { setCreating(false); setCreateText(''); }}
+            saving={creating}
+          />
+        )}
       </div>
+    </div>
+  );
+};
+
+/* ==================== Обычный тег ==================== */
+
+interface TagItemProps {
+  color: string;
+  text: string;
+  active?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  isAdd?: boolean;
+}
+
+const TagItem: React.FC<TagItemProps> = ({
+  color, text, active, onClick, disabled, onEdit, onDelete, isAdd
+}) => {
+  const cls = ['task-tag'];
+  if (active && !isAdd) cls.push('task-tag-active');
+  if (disabled) cls.push('task-tag-disabled');
+  if (isAdd) cls.push('task-tag-add');
+
+  return (
+    <div
+      className={cls.join(' ')}
+      style={!isAdd && !disabled ? { backgroundColor: color } as React.CSSProperties : undefined}
+      onClick={!disabled && onClick ? onClick : undefined}
+    >
+      <span>{text}</span>
+      {!isAdd && (
+        <span className="tag-actions">
+          {onEdit && (
+            <button
+              className="tag-action-btn mini-button"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              title="Редактировать"
+            >
+              <Edit2 size={12} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              className="tag-action-btn mini-button"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              title="Удалить"
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/* ==================== Inline-форма редактирования/создания ==================== */
+
+interface TagEditItemProps {
+  isNew?: boolean;
+  initialText: string;
+  initialColor: string;
+  onTextChange: (v: string) => void;
+  onColorChange: (v: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  saving: boolean;
+}
+
+const TagEditItem: React.FC<TagEditItemProps> = ({
+  isNew, initialText, initialColor, onTextChange, onColorChange, onSave, onCancel, saving
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+    if (!isNew) inputRef.current?.select();
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !saving) onSave();
+    if (e.key === 'Escape') onCancel();
+  };
+
+  return (
+    <div className="task-tag task-tag-editing">
+      <label className="tag-color-swatch-btn" title="Цвет">
+        <input
+          type="color"
+          value={initialColor}
+          onChange={(e) => onColorChange(e.target.value)}
+        />
+        <span className="tag-color-preview" style={{ backgroundColor: initialColor }} />
+      </label>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={isNew ? 'Название' : 'Название тега'}
+        value={initialText}
+        onChange={(e) => onTextChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+      <button
+        className="tag-action-btn tag-action-save"
+        onClick={onSave}
+        title="Сохранить"
+      >
+        <Check size={12} />
+      </button>
+      <button
+        className="tag-action-btn"
+        onClick={onCancel}
+        title="Отмена"
+      >
+        <X size={12} />
+      </button>
     </div>
   );
 };
