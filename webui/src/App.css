@@ -555,7 +555,7 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 2px 8px 2px 8px;
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 500;
@@ -567,12 +567,23 @@ footer {
 }
 .day-card-task-tag {
   min-height: 14px;
+  min-width: 40px;
 }
 .tag-remove-icon {
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.1s;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(2px);
+  border-radius: 4px;
+  padding: 2px;
+  line-height: 0;
 }
+
 .task-tag:hover .tag-remove-icon {
   opacity: 1;
 }

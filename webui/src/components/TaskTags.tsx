@@ -26,10 +26,11 @@ const TaskTags: React.FC<Props> = ({ tags, onRemove, maxVisible = 3 }) => {
           onMouseLeave={() => setHoveredTagId(null)}
         >
           <span>{tag.tag_text}</span>
-          {onRemove && hoveredTagId === tag.task_tag_id && (
+          {onRemove && (
             <X
               size={12}
               className="tag-remove-icon"
+              style={{ opacity: hoveredTagId === tag.task_tag_id ? 1 : 0 }}
               onClick={(e) => { e.stopPropagation(); onRemove(tag.task_tag_id); }}
             />
           )}

@@ -1,4 +1,4 @@
- /* ==================== Менеджер тегов ==================== */
+/* ==================== Менеджер тегов ==================== */
 
 .tag-manager {
   background: var(--bg-tag-manager);
@@ -23,7 +23,7 @@
   gap: 8px;
 }
 
-/* ==================== Плашка тега (как в Days) ==================== */
+/* ==================== Плашка тега ==================== */
 
 .task-tag {
   display: inline-flex;
@@ -38,7 +38,7 @@
   position: relative;
   transition: background 0.2s ease;
   min-height: 28px;
-  min-width: 28px;
+  min-width: 70px;
   box-sizing: border-box;
   line-height: 1;
 }
@@ -74,12 +74,16 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Иконки действий внутри тега */
+/* Иконки действий */
 .tag-actions {
   display: none;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
   align-items: center;
   gap: 2px;
-  margin-left: 4px;
+  min-width: 24px;
 }
 
 .task-tag:hover .tag-actions {
@@ -87,32 +91,24 @@
 }
 
 .tag-action-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  width: 18px;
+  height: 18px;
   border: none;
-  background: none;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(2px);
+  border-radius: 4px;
   cursor: pointer;
   color: inherit;
   opacity: 0.7;
-  border-radius: 4px;
   transition: opacity 0.15s, background 0.15s;
-  line-height: 0;
   flex-shrink: 0;
+  flex-direction: column;
 }
 
 .tag-action-btn svg {
-  width: 12px;
-  height: 12px;
-}
-
-/* Переопределяем mini-button для тегов */
-.tag-action-btn.mini-button {
-  padding: 2px;
-}
-
-.task-tag-editing .tag-action-btn svg {
   width: 12px;
   height: 12px;
 }
@@ -124,7 +120,7 @@
 
 .tag-action-btn:hover {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* ==================== Inline-форма редактирования ==================== */
