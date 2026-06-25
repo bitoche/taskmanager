@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Task, TaskComment, TaskTag } from '../types';
 import { fetchTaskComments, addTaskComment, deleteTaskComment } from '../api';
 import { X, Send, Trash2, Plus, Tag, MessageSquare, FileText, ExternalLink, Calendar, Check } from 'lucide-react';
@@ -43,6 +43,10 @@ const TaskModal: React.FC<Props> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const tagSelectorRef = useRef<HTMLDivElement>(null);
 
+  // === Отслеживание изменений формы (пункт 3.2) ===
+  const originalDataRef = useRef<{ title: string; description: string; dueDate: string; link: string } | null>(null);
+  const hasModalChangesRef = useRef(false);
+
   // Загрузка комментариев при открытии для существующей задачи
   useEffect(() => {
     if (isOpen && task) {
@@ -50,20 +54,40 @@ const TaskModal: React.FC<Props> = ({
     }
   }, [isOpen, task]);
 
-  // Заполнение формы при редактировании или создании
+  // Заполнение формы при редактировании или создании + сохранение оригинальных данных
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
       setDueDate(task.due_date ? task.due_date.slice(0, 10) : '');
       setLink(task.link_to_taskmanager || '');
+      originalDataRef.current = {
+        title: task.title,
+        description: task.description || '',
+        dueDate: task.due_date ? task.due_date.slice(0, 10) : '',
+        link: task.link_to_taskmanager || '',
+      };
     } else {
       setTitle('');
       setDescription('');
       setDueDate(defaultDate || '');
       setLink('');
+      originalDataRef.current = { title: '', description: '', dueDate: defaultDate || '', link: '' };
     }
   }, [task, defaultDate]);
+
+  // Проверка изменений формы
+  useEffect(() => {
+    if (originalDataRef.current === null) return;
+    const orig = originalDataRef.current;
+    const changed = (
+      title !== orig.title ||
+      description !== orig.description ||
+      dueDate !== orig.dueDate ||
+      link !== orig.link
+    );
+    hasModalChangesRef.current = changed;
+  }, [title, description, dueDate, link]);
 
   // Закрытие селектора тегов при клике вне его области
   useEffect(() => {
@@ -76,14 +100,23 @@ const TaskModal: React.FC<Props> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // === Функция подтверждения закрытия (пункт 3.2) ===
+  const handleConfirmClose = useCallback(() => {
+    if (hasModalChangesRef.current) {
+      const confirmed = window.confirm('Есть несохранённые изменения. Закрыть без сохранения?');
+      if (!confirmed) return;
+    }
+    onClose();
+  }, [onClose]);
+
   // ESC для закрытия модалки
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleConfirmClose();
     };
     if (isOpen) document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleConfirmClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,11 +237,11 @@ const TaskModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="task-modal-overlay" onClick={onClose}>
+    <div className="task-modal-overlay">
       <div className="task-modal-container" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         <div className="task-modal-header">
           <h3>{task ? `Редактирование задачи #${task.task_id}` : 'Новая задача'}</h3>
-          <button className="task-modal-close" onClick={onClose}>
+          <button className="task-modal-close" onClick={handleConfirmClose}>
             <X size={20} />
           </button>
         </div>
@@ -398,7 +431,7 @@ const TaskModal: React.FC<Props> = ({
                 <Trash2 size={16} /> Удалить
               </button>
             )}
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={handleConfirmClose}>
               Отмена
             </button>
             <button type="submit" className="btn-primary">

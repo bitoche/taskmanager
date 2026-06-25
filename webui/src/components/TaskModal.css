@@ -99,6 +99,9 @@
   z-index: 1000;
   animation: fadeIn 0.2s ease;
   transition: background 0.3s ease;
+  /* Невидимый край 20px со всех сторон — клик по нему считается кликом по модалке */
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 /* Контейнер модалки */
@@ -113,6 +116,10 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: slideUp 0.3s ease;
   transition: background 0.3s ease;
+  overflow: hidden;
+  /* Компенсируем padding оверлея — визуально модалка на том же месте, но область клика шире */
+  margin: -20px;
+  box-sizing: border-box;
 }
 
 /* Хедер */

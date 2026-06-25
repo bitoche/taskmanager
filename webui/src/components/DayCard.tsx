@@ -192,8 +192,8 @@ const DayCard: React.FC<Props> = ({
                   </div>
                 </div>
                 {/* Отображение тегов с возможностью удалить тег с задачи */}
-                {taskTags.length > 0 && onRemoveTagFromTask && (
-                  <TaskTags tags={taskTags} onRemove={(tagId) => onRemoveTagFromTask(task.task_id, tagId)} maxVisible={5} />
+                {taskTags.length > 0 && (
+                  <TaskTags tags={taskTags} onRemove={onRemoveTagFromTask ? (tagId) => onRemoveTagFromTask(task.task_id, tagId) : undefined} maxVisible={5} />
                 )}
               </div>
             );

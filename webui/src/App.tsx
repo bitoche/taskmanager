@@ -397,31 +397,6 @@ const App: React.FC = () => {
 
   const closeModal = () => setModalState({ isOpen: false });
 
-  // Назначение / удаление тегов (также помечаем как изменения)
-  const handleAssignTag = useCallback(async (taskId: number, tagId: number) => {
-    await assignTagToTask(tagId, taskId);
-    await refreshTagsForTask(taskId);
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const handleRemoveTagFromTask = useCallback(async (taskId: number, tagId: number) => {
-    await unassignTagFromTask(tagId, taskId);
-    await refreshTagsForTask(taskId);
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const handleCreateTag = useCallback(async (tagText: string, tagColor: string) => {
-    await createTag(tagText, tagColor);
-    await loadTagsData();
-    setHasUnsavedChanges(true);
-  }, [loadTagsData]);
-
-  const handleUpdateTag = useCallback(async (tagId: number, text: string, color: string) => {
-    await updateTag(tagId, text, color);
-    await loadTagsData();
-    setHasUnsavedChanges(true);
-  }, [loadTagsData]);
-
   const refreshTagsForTask = useCallback(async (taskId: number) => {
     try {
       const assignments = await fetchTaskTagsXTask();
@@ -435,6 +410,33 @@ const App: React.FC = () => {
       console.error('Failed to refresh tags for task', err);
     }
   }, []);
+
+  // Назначение / удаление тегов (также помечаем как изменения)
+  const handleAssignTag = useCallback(async (tagId: number) => {
+    if (!modalState.task) return;
+    await assignTagToTask(tagId, modalState.task.task_id);
+    await refreshTagsForTask(modalState.task.task_id);
+    setHasUnsavedChanges(true);
+  }, [modalState.task, refreshTagsForTask]);
+
+  const handleRemoveTagFromTask = useCallback(async (tagId: number) => {
+    if (!modalState.task) return;
+    await unassignTagFromTask(tagId, modalState.task.task_id);
+    await refreshTagsForTask(modalState.task.task_id);
+    setHasUnsavedChanges(true);
+  }, [modalState.task, refreshTagsForTask]);
+
+  const handleCreateTag = useCallback(async (tagText: string, tagColor: string) => {
+    await createTag(tagText, tagColor);
+    await loadTagsData();
+    setHasUnsavedChanges(true);
+  }, [loadTagsData]);
+
+  const handleUpdateTag = useCallback(async (tagId: number, text: string, color: string) => {
+    await updateTag(tagId, text, color);
+    await loadTagsData();
+    setHasUnsavedChanges(true);
+  }, [loadTagsData]);
 
   if (loading) return <div className="calendar-main">Загрузка...</div>;
 
@@ -497,7 +499,8 @@ const App: React.FC = () => {
         <footer>
           Клик по дню – новая задача, по названию – редактировать.
         </footer>
-        <TaskModal
+      </div>
+      <TaskModal
           isOpen={modalState.isOpen}
           task={modalState.task || undefined}
           defaultDate={modalState.defaultDate}
@@ -506,11 +509,10 @@ const App: React.FC = () => {
           onClose={closeModal}
           allTags={allTags}
           taskTags={modalState.task ? taskTagsMap.get(modalState.task.task_id) || [] : []}
-          onAssignTag={(tagId) => modalState.task && handleAssignTag(modalState.task.task_id, tagId)}
-          onRemoveTag={(tagId) => modalState.task && handleRemoveTagFromTask(modalState.task.task_id, tagId)}
+          onAssignTag={handleAssignTag}
+          onRemoveTag={handleRemoveTagFromTask}
           onCreateTag={handleCreateTag}
         />
-      </div>
       <div className="fixed-buttons">
         <button className={`sync-btn ${saving ? 'sync-btn-loading' : ''}`} onClick={handleSaveToCloud} disabled={saving || loadingCloud || refreshing} title="Сохранить в облако">
           <Upload size={20} className={saving ? 'pulse-icon' : ''} />
