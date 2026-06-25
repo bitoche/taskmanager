@@ -11,7 +11,7 @@ class RemoteFilesHandler:
         self.interface = yadisk.YaDisk(token=config.REMOTE_STORAGE_TOKEN) if config.REMOTE_STORAGE_TOKEN is not None and isinstance(config.REMOTE_STORAGE_TOKEN, str) else None
         self.remote_filepath = Path('/taskservice/tech/tasks.db')
         self.file = config.DB_PATH
-        self.last_loaded_hash: str = None
+
     
     def get_file_hash(self, file_path, algorithm='sha256'):
         h = hashlib.new(algorithm)
@@ -23,7 +23,8 @@ class RemoteFilesHandler:
     def is_remote_equals_local_file(self):
         meta = self.interface.get_meta(str(self.remote_filepath))
         remote_sha256 = getattr(meta, 'sha256', None)
-        return self.last_loaded_hash == remote_sha256 
+        local_sha256 = self.get_file_hash(self.file)
+        return local_sha256 == remote_sha256
     
     def get_remote_modified_time(self):
         """Получает время изменения удалённого файла."""
@@ -83,9 +84,6 @@ class RemoteFilesHandler:
     def upload_file(self):
         if self.interface is None:
             return 'skipped'
-        current_hash = self.get_file_hash(file_path=self.file)
-        # if self.last_loaded_hash is not None and self.last_loaded_hash == current_hash:
-        #     return 'hashed'
         try:
             self.interface.upload(self.file, str(self.remote_filepath), overwrite=True)
             status = '200'
@@ -95,7 +93,6 @@ class RemoteFilesHandler:
         except yadisk.exceptions.ParentNotFoundError as e:
             print(f'409: Не удалось найти указанную директорию на удаленном ресурсе: {e}')
             status = '409'
-        self.last_loaded_hash = current_hash
         return status
     
     def download_file(self):
