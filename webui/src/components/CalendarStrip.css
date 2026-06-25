@@ -1,4 +1,8 @@
 /* пустой, можно использовать глобальные стили, но для порядка */
+.calendar-strip {
+  scroll-behavior: auto !important;
+}
+
 .calendar-header {
   display: flex;
   justify-content: space-between;

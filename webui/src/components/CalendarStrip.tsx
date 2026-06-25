@@ -5,6 +5,7 @@ import {
   useCallback,
   forwardRef,
   useImperativeHandle,
+  useLayoutEffect,
 } from 'react';
 
 import DayCard from './DayCard';
@@ -71,16 +72,35 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   const [loadingLeft, setLoadingLeft] = useState(false);
   const [loadingRight, setLoadingRight] = useState(false);
   const [daysOffMap, setDaysOffMap] = useState<Map<string, boolean>>(new Map());
+  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const stripRef = useRef<HTMLDivElement>(null);
   const datesRef = useRef<Date[]>([]);
+  const scrollLeftAfterRender = useRef<number | null>(null);
+  const isReloadingScroll = useRef(false);
+  const isReloadingLeft = useRef(false);
 
   const initialized = useRef(false);
 
   const todayStr = formatLocalDate(getTodayDate());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     datesRef.current = dates;
+    
+    console.log('[CalendarStrip] dates useLayoutEffect:', { isReloadingScroll: isReloadingScroll.current, scrollLeftAfterRender: scrollLeftAfterRender.current, isReloadingLeft: isReloadingLeft.current });
+    
+    // Восстанавливаем позицию скролла после рендера новых элементов
+    if (isReloadingScroll.current && scrollLeftAfterRender.current !== null && stripRef.current) {
+      // Для левой подгрузки добавляем небольшой оффсет для компенсации
+      const offset = isReloadingLeft.current ? 95 : 0;
+      const targetScrollLeft = scrollLeftAfterRender.current + offset;
+      console.log('[CalendarStrip] restoring scrollLeft to:', targetScrollLeft, '(offset:', offset, ')');
+      stripRef.current.scrollLeft = targetScrollLeft;
+      scrollLeftAfterRender.current = null;
+      isReloadingScroll.current = false;
+      isReloadingLeft.current = false;
+    }
   }, [dates]);
 
   // =========================
@@ -128,24 +148,29 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     });
 
     initialized.current = true;
+    setIsInitialized(true);
   }, [onLoadRange, onHolidaysLoadingChange]);
 
-  // Прокрутка к сегодняшнему дню (после загрузки данных)
+  // Прокрутка к сегодняшнему дню (только при первой загрузке)
   useEffect(() => {
-    if (dates.length === 0 || !stripRef.current) return;
+    console.log('[CalendarStrip] scroll effect:', { isInitialized, hasScrolledToToday, dates: dates.length, todayStr });
+    if (!isInitialized || !stripRef.current || hasScrolledToToday || dates.length === 0) return;
 
     const strip = stripRef.current;
     const todayCard = strip.querySelector(`[data-date="${todayStr}"]`) as HTMLElement | null;
+    console.log('[CalendarStrip] todayCard:', todayCard);
     if (!todayCard) return;
 
     // Даём время на рендер и применяем прокрутку
     setTimeout(() => {
+      console.log('[CalendarStrip] scrolling to today');
       strip.scrollTo({
         left: Math.max(0, todayCard.offsetLeft - 46),
         behavior: 'smooth',
       });
+      setHasScrolledToToday(true);
     }, 100);
-  }, [dates, todayStr]);
+  }, [isInitialized, hasScrolledToToday, todayStr]);
 
   // =========================
   // LOAD LEFT
@@ -163,22 +188,17 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       cur = addDays(cur, 1);
     }
 
-    const oldScrollLeft = stripRef.current?.scrollLeft || 0;
     const cardWidth = 256;
     const addedWidth = newDates.length * cardWidth;
-
-    setDates((prev) => [...newDates, ...prev]);
     
-    setLoadedDateKeys((prev) => {
-      const next = new Set(prev);
-      newDates.forEach((d) => next.add(formatLocalDate(d)));
-      return next;
-    });
-
+    // Сохраняем позицию ДО асинхронных операций
+    const oldScrollLeft = stripRef.current?.scrollLeft || 0;
+    console.log('[CalendarStrip] handleLoadLeft captured:', { oldScrollLeft, addedWidth, dates: dates.length });
+    
     const fromKey = formatLocalDate(newFirst);
     const toKey = formatLocalDate(addDays(firstDate, -1));
     await onLoadRange(fromKey, toKey);
-
+    
     // Загружаем информацию о выходных/праздниках для нового диапазона
     onHolidaysLoadingChange?.(true);
     getDaysInfo(newFirst, firstDate).then(map => {
@@ -188,13 +208,22 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       console.error('Failed to load holidays:', err);
       onHolidaysLoadingChange?.(false);
     });
-
-    if (stripRef.current) {
-      stripRef.current.scrollLeft = oldScrollLeft + addedWidth;
-    }
     
+    isReloadingScroll.current = true;
+    isReloadingLeft.current = true;
+    scrollLeftAfterRender.current = oldScrollLeft + addedWidth;
+    console.log('[CalendarStrip] handleLoadLeft scheduled scrollLeft:', scrollLeftAfterRender.current);
+    
+    setDates((prev) => [...newDates, ...prev]);
+    
+    setLoadedDateKeys((prev) => {
+      const next = new Set(prev);
+      newDates.forEach((d) => next.add(formatLocalDate(d)));
+      return next;
+    });
+
     setLoadingLeft(false);
-  }, [dates, onLoadRange, loadingLeft]);
+  }, [dates, onLoadRange, loadingLeft, onHolidaysLoadingChange]);
 
   // =========================
   // LOAD RIGHT
@@ -212,6 +241,13 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
       cur = addDays(cur, 1);
     }
 
+    const oldScrollLeft = stripRef.current?.scrollLeft || 0;
+    console.log('[CalendarStrip] handleLoadRight:', { oldScrollLeft, dates: dates.length });
+
+    isReloadingScroll.current = true;
+    scrollLeftAfterRender.current = oldScrollLeft;
+    console.log('[CalendarStrip] handleLoadRight scheduled scrollLeft:', scrollLeftAfterRender.current);
+    
     setDates((prev) => [...prev, ...newDates]);
     
     setLoadedDateKeys((prev) => {
