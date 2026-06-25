@@ -289,7 +289,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     };
   }, []);
 
-  const navigateToDate = useCallback((dateStr: string) => {
+  const navigateToDate = useCallback((dateStr: string, taskId?: number) => {
     if (!stripRef.current) return;
     const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
     if (targetCard) {
@@ -297,6 +297,12 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
         left: Math.max(0, targetCard.offsetLeft - 46),
         behavior: 'smooth',
       });
+      if (taskId !== undefined) {
+        setTimeout(() => {
+          setHighlightedTaskId(taskId);
+          setTimeout(() => setHighlightedTaskId(null), 2000);
+        }, 300);
+      }
     }
   }, []);
 

@@ -313,8 +313,20 @@ const App: React.FC = () => {
   };
 
   const handleTaskClickFromList = (task: Task) => {
-    if (task.due_date) {
-      calendarRef.current?.scrollToDate(task.due_date, task.task_id);
+    // Определяем целевую дату для прокрутки
+    let targetDate: string | undefined;
+    
+    if (task.task_status === 2 && task.closed_dttm) {
+      // Завершённая задача — крутим к дате завершения
+      targetDate = task.closed_dttm.slice(0, 10);
+    } else if (task.due_date) {
+      // Активная задача (в т.ч. просроченная) — крутим к due_date
+      // Там будет ghost-карточка, которая и должна моргать
+      targetDate = task.due_date;
+    }
+    
+    if (targetDate) {
+      calendarRef.current?.scrollToDate(targetDate, task.task_id);
     }
   };
 

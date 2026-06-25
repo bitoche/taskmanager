@@ -11,7 +11,7 @@ interface Props {
   onEditTask: (task: Task) => void;
   onMoveTask: (taskId: number, newDueDate: string) => void;
   onToggleStatus: (taskId: number, currentStatus: number) => void;
-  onGhostClick?: (dateStr: string) => void;
+  onGhostClick?: (dateStr: string, taskId?: number) => void;
   onRemoveTagFromTask?: (taskId: number, tagId: number) => void; // новый проп
   dateStr: string;
   highlightedTaskId?: number | null;
@@ -116,13 +116,14 @@ const DayCard: React.FC<Props> = ({
         ) : (
           tasks.map((task) => {
             if (task.isGhost) {
+              const isHighlighted = highlightedTaskId === task.task_id;
               return (
                 <div
                   key={task.task_id}
-                  className="task-item ghost-task"
+                  className={`task-item ghost-task ${isHighlighted ? 'task-highlight' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGhostClick?.(task.ghostTargetDate);
+                    onGhostClick?.(task.ghostTargetDate, task.task_id);
                   }}
                 >
                   <div className="task-title">
