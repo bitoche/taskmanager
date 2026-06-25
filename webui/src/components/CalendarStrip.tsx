@@ -372,8 +372,42 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
   // EXPOSE METHODS
   // =========================
   useImperativeHandle(ref, () => ({
-    scrollToDate: (dateStr: string, taskId?: number) => {
+    scrollToDate: async (dateStr: string, taskId?: number) => {
       if (!stripRef.current) return;
+      
+      // Проверяем, есть ли дата в текущем диапазоне
+      const currentDateKeys = datesRef.current.map(d => formatLocalDate(d));
+      const dateIndex = currentDateKeys.indexOf(dateStr);
+      
+      if (dateIndex === -1) {
+        // Дата вне диапазона — нужно загрузить нужный диапазон
+        const targetDate = new Date(dateStr);
+        const firstDate = datesRef.current[0];
+        const lastDate = datesRef.current[datesRef.current.length - 1];
+        
+        if (targetDate < firstDate) {
+          // Дата слева — загружаем влево
+          const daysDiff = Math.ceil((firstDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
+          const loadsNeeded = Math.ceil(daysDiff / LOAD_MORE_DAYS);
+          
+          for (let i = 0; i < loadsNeeded; i++) {
+            await handleLoadLeft();
+          }
+        } else if (targetDate > lastDate) {
+          // Дата справа — загружаем вправо
+          const daysDiff = Math.ceil((targetDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+          const loadsNeeded = Math.ceil(daysDiff / LOAD_MORE_DAYS);
+          
+          for (let i = 0; i < loadsNeeded; i++) {
+            await handleLoadRight();
+          }
+        }
+        
+        // Даём время на рендер после загрузки
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      
+      // Теперь ищем карточку и прокручиваем
       const targetCard = stripRef.current.querySelector(`[data-date="${dateStr}"]`) as HTMLElement | null;
       if (targetCard) {
         stripRef.current.scrollTo({
