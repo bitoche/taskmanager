@@ -15,7 +15,7 @@ import './CalendarStrip.css';
 
 const INITIAL_DAYS_BEFORE = 7;
 const INITIAL_DAYS_AFTER = 23;
-const LOAD_MORE_DAYS = 30;
+const LOAD_MORE_DAYS = 7;
 
 function getTodayDate(): Date {
   const d = new Date();
@@ -93,7 +93,7 @@ const CalendarStrip = forwardRef<CalendarStripRef, Props>(({
     // Восстанавливаем позицию скролла после рендера новых элементов
     if (isReloadingScroll.current && scrollLeftAfterRender.current !== null && stripRef.current) {
       // Для левой подгрузки добавляем небольшой оффсет для компенсации
-      const offset = isReloadingLeft.current ? 95 : 0;
+      const offset = isReloadingLeft.current ? LOAD_MORE_DAYS*(30/95) : 0; // 30/95 - вручную подобранное число. При 30 днях прогрузки 95 идеально компенсировало разницу overflow. поэтому теперь оно умножается на этот коэфф.
       const targetScrollLeft = scrollLeftAfterRender.current + offset;
       console.log('[CalendarStrip] restoring scrollLeft to:', targetScrollLeft, '(offset:', offset, ')');
       stripRef.current.scrollLeft = targetScrollLeft;
