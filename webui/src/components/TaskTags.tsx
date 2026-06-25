@@ -37,7 +37,7 @@ const TaskTags: React.FC<Props> = ({ tags, onRemove, maxVisible = 3 }) => {
         </div>
       ))}
       {hiddenCount > 0 && (
-        <div className="task-tag more-tags" title={tags.slice(maxVisible).map(t => t.tag_text).join(', ')}>
+        <div className="task-tag day-card-task-tag more-tags" title={tags.slice(maxVisible).map(t => t.tag_text).join(', ')}>
           +{hiddenCount}
         </div>
       )}

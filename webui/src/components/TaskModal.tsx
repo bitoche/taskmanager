@@ -128,10 +128,11 @@ const TaskModal: React.FC<Props> = ({
   };
 
   const handleCreateTag = async () => {
-    if (!newTagText.trim()) return;
+    const text = newTagText.trim();
+    if (text.length < 2 || text.length > 29) return;
     setCreatingTag(true);
     try {
-      await onCreateTag(newTagText.trim(), newTagColor);
+      await onCreateTag(text, newTagColor);
       setNewTagText('');
       setNewTagColor('#4a90d9');
     } catch (err) {
@@ -157,7 +158,7 @@ const TaskModal: React.FC<Props> = ({
     saving: boolean;
   }> = ({ value, onChange, color, onColorChange, onSave, onCancel, saving }) => {
     const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => { inputRef.current?.focus(); inputRef.current?.select(); }, []);
+    useEffect(() => { inputRef.current?.focus(); }, []);
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !saving) onSave();
       if (e.key === 'Escape') onCancel();
@@ -169,8 +170,9 @@ const TaskModal: React.FC<Props> = ({
           type="text"
           placeholder="Название тега"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value.slice(0, 29))}
           onKeyDown={handleKeyDown}
+          maxLength={29}
         />
         <label className="tag-color-input" title="Цвет">
           <input

@@ -38,10 +38,11 @@ const TagManager: React.FC<Props> = ({
   }, [editingTagId]);
 
   const handleCreate = async () => {
-    if (!createText.trim()) return;
+    const text = createText.trim();
+    if (text.length < 2 || text.length > 29) return;
     setCreating(true);
     try {
-      await onCreateTag(createText.trim(), createColor);
+      await onCreateTag(text, createColor);
       setCreateText('');
       setCreateColor('#4a90d9');
     } catch (err) {
@@ -66,10 +67,12 @@ const TagManager: React.FC<Props> = ({
   };
 
   const handleUpdate = async () => {
-    if (!onUpdateTag || editingTagId === null || !editText.trim()) return;
+    if (!onUpdateTag || editingTagId === null) return;
+    const text = editText.trim();
+    if (text.length < 2 || text.length > 29) return;
     setUpdating(true);
     try {
-      await onUpdateTag(editingTagId, editText.trim(), editColor);
+      await onUpdateTag(editingTagId, text, editColor);
     } catch (err) {
       console.error(err);
     } finally {
@@ -247,8 +250,9 @@ const TagEditItem: React.FC<TagEditItemProps> = ({
         type="text"
         placeholder={isNew ? 'Название' : 'Название тега'}
         value={initialText}
-        onChange={(e) => onTextChange(e.target.value)}
+        onChange={(e) => onTextChange(e.target.value.slice(0, 29))}
         onKeyDown={handleKeyDown}
+        maxLength={29}
       />
       <button
         className="tag-action-btn tag-action-save"
