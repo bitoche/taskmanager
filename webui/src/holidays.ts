@@ -39,14 +39,16 @@ export async function getDaysInfo(start: Date, end: Date): Promise<Map<string, b
  */
 export function getLocalWeekends(start: Date, end: Date): Map<string, boolean> {
   const result = new Map<string, boolean>();
-  const cur = new Date(start);
+  // Используем UTC для избежания проблем с часовыми поясами
+  const cur = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
+  const endUtc = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()));
   
-  while (cur <= end) {
+  while (cur <= endUtc) {
     const dateStr = cur.toISOString().slice(0, 10);
-    const dayOfWeek = cur.getDay();
+    const dayOfWeek = cur.getUTCDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     result.set(dateStr, isWeekend);
-    cur.setDate(cur.getDate() + 1);
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
   
   return result;
@@ -56,7 +58,8 @@ export function getLocalWeekends(start: Date, end: Date): Map<string, boolean> {
  * Проверить, является ли дата выходным (суббота/воскресенье)
  */
 export function isWeekendLocal(dateStr: string): boolean {
-  const date = new Date(dateStr);
-  const dayOfWeek = date.getDay();
+  // Парсим дату в UTC для избежания проблем с часовыми поясами
+  const date = new Date(dateStr + 'T00:00:00Z');
+  const dayOfWeek = date.getUTCDay();
   return dayOfWeek === 0 || dayOfWeek === 6;
 }
