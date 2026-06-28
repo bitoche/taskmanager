@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Task } from '../types';
+import { Task, TaskTag } from '../types';
 import {
   useReactTable,
   getCoreRowModel,
@@ -15,6 +15,7 @@ import './TaskList.css';
 
 interface Props {
   tasks: Task[];
+  taskTagsMap: Map<number, TaskTag[]>;
   onTaskClick: (task: Task) => void;
   onToggleStatus: (taskId: number, newStatus: number) => void;
   onEditTask: (task: Task) => void;
@@ -38,7 +39,7 @@ function globalFilterFn(row: any, _columnId: string, filterValue: string) {
   return fields.some(f => f.toLowerCase().includes(search));
 }
 
-const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditTask, onDeleteTask }) => {
+const TaskList: React.FC<Props> = ({ tasks, taskTagsMap, onTaskClick, onToggleStatus, onEditTask, onDeleteTask }) => {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'task_status', desc: false },
@@ -186,12 +187,28 @@ const TaskList: React.FC<Props> = ({ tasks, onTaskClick, onToggleStatus, onEditT
       {
         accessorKey: 'task_status',
         header: 'Статус',
-        size: 120,
+        size: 180,
         cell: info => {
-          const isCompleted = info.row.original.isCompleted;
+          const task = info.row.original as Task & { isCompleted: boolean };
+          const isCompleted = task.isCompleted;
+          const tags = taskTagsMap.get(task.task_id) || [];
           return (
             <div className="task-status-cell" title={info.row.original.description || 'Нет описания'}>
-              {isCompleted ? '✅ Выполнена' : '🟢 Активна'}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {isCompleted ? '✅ Выполнена' : '🟢 Активна'}
+                {tags.length > 0 && (
+                  <div className="task-status-tags">
+                    {tags.map(tag => (
+                      <span
+                        key={tag.task_tag_id}
+                        className="task-status-tag-dot"
+                        title={tag.tag_text}
+                        style={{ backgroundColor: tag.tag_color }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </span>
             </div>
           );
         },

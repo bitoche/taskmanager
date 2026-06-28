@@ -503,6 +503,7 @@ const App: React.FC = () => {
         />
         <TaskList
           tasks={filteredTasks}
+          taskTagsMap={taskTagsMap}
           onTaskClick={handleTaskClickFromList}
           onToggleStatus={handleToggleStatus}
           onEditTask={handleEditTask}

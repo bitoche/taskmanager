@@ -239,6 +239,22 @@
   max-width: 120px;
 }
 
+/* Точки тегов рядом со статусом */
+.task-status-tags {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.task-status-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: help;
+}
+
 .status-toggle-btn-list,
 .edit-btn-list,
 .delete-btn-list {
