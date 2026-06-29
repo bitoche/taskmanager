@@ -194,9 +194,7 @@ const TaskList: React.FC<Props> = ({ tasks, taskTagsMap, onTaskClick, onToggleSt
           const tags = taskTagsMap.get(task.task_id) || [];
           return (
             <div className="task-status-cell" title={info.row.original.description || 'Нет описания'}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                {isCompleted ? '✅ Выполнена' : '🟢 Активна'}
-                {tags.length > 0 && (
+              {tags.length > 0 && (
                   <div className="task-status-tags">
                     {tags.map(tag => (
                       <span
@@ -208,6 +206,8 @@ const TaskList: React.FC<Props> = ({ tasks, taskTagsMap, onTaskClick, onToggleSt
                     ))}
                   </div>
                 )}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {isCompleted ? 'Выполнена' : 'Активна'}
               </span>
             </div>
           );
