@@ -4,9 +4,6 @@
   --task-list-header: #1e2a3a;
   --task-list-search-bg: white;
   --task-list-search-border: #cbd5e1;
-  --task-list-scrollbar-track: #f1f1f1;
-  --task-list-scrollbar-thumb: #cbd5e1;
-  --task-list-scrollbar-thumb-hover: #94a3b8;
   --task-list-border: #e2e8f0;
   --task-list-hover-border: #cbd5e1;
   --task-list-header-bg: #eef2f8;
@@ -34,9 +31,6 @@
   --task-list-header: #e0e0e0;
   --task-list-search-bg: #3a3a55;
   --task-list-search-border: #4a4a6a;
-  --task-list-scrollbar-track: #252538;
-  --task-list-scrollbar-thumb: #4a4a6a;
-  --task-list-scrollbar-thumb-hover: #606070;
   --task-list-border: #3a3a55;
   --task-list-hover-border: #4a4a6a;
   --task-list-header-bg: #3a3a55;
@@ -120,15 +114,15 @@
   height: 8px;
 }
 .task-list-table-wrapper::-webkit-scrollbar-track {
-  background: var(--task-list-scrollbar-track);
+  background: var(--bg-scrollbar-track);
   border-radius: 4px;
 }
 .task-list-table-wrapper::-webkit-scrollbar-thumb {
-  background: var(--task-list-scrollbar-thumb);
+  background: var(--bg-scrollbar-thumb);
   border-radius: 4px;
 }
 .task-list-table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: var(--task-list-scrollbar-thumb-hover);
+  background: var(--bg-scrollbar-thumb-hover);
 }
 
 .task-list-table {

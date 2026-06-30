@@ -174,12 +174,15 @@
   width: 6px;
 }
 .task-modal-body::-webkit-scrollbar-track {
-  background: var(--modal-border);
+  background: var(--bg-scrollbar-track);
   border-radius: 10px;
 }
 .task-modal-body::-webkit-scrollbar-thumb {
-  background: var(--icon-color);
+  background: var(--bg-scrollbar-thumb);
   border-radius: 10px;
+}
+.task-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-scrollbar-thumb-hover);
 }
 
 /* Секции */
@@ -359,6 +362,20 @@
   overflow-y: auto;
   margin-bottom: 8px;
 }
+.tag-list-select::-webkit-scrollbar {
+  width: 6px;
+}
+.tag-list-select::-webkit-scrollbar-track {
+  background: var(--bg-scrollbar-track);
+  border-radius: 10px;
+}
+.tag-list-select::-webkit-scrollbar-thumb {
+  background: var(--bg-scrollbar-thumb);
+  border-radius: 10px;
+}
+.tag-list-select::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-scrollbar-thumb-hover);
+}
 
 .tag-option {
   display: flex;
@@ -512,6 +529,20 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+.comments-list::-webkit-scrollbar-track {
+  background: var(--bg-scrollbar-track);
+  border-radius: 10px;
+}
+.comments-list::-webkit-scrollbar-thumb {
+  background: var(--bg-scrollbar-thumb);
+  border-radius: 10px;
+}
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-scrollbar-thumb-hover);
 }
 
 .comment-item {

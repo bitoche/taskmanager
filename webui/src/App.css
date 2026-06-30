@@ -7,6 +7,7 @@
   --bg-nav-btn-hover: #eef2f5;
   --bg-scrollbar-track: #d9e2ec;
   --bg-scrollbar-thumb: #607d8b;
+  --bg-scrollbar-thumb-hover: #4a6a7a;
   --bg-tasks-list: rgba(255,255,255,0.3);
   --bg-task-item: #f4f9fe;
   --bg-task-item-hover: #e2edf6;
@@ -67,6 +68,7 @@
   --bg-nav-btn-hover: #3d3d5c;
   --bg-scrollbar-track: #1a1a2e;
   --bg-scrollbar-thumb: #4a4a6a;
+  --bg-scrollbar-thumb-hover: #6a6a8a;
   --bg-tasks-list: rgba(40,40,60,0.4);
   --bg-task-item: #3a3a55;
   --bg-task-item-hover: #4a4a65;
@@ -130,6 +132,29 @@ body {
   padding: 2rem 1rem;
   min-height: 100vh;
   transition: background 0.3s ease;
+}
+
+/* Глобальные стили для скроллбаров */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--bg-scrollbar-track);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--bg-scrollbar-thumb);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-scrollbar-thumb-hover);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-scrollbar-thumb) var(--bg-scrollbar-track);
 }
 
 .calendar-main {
@@ -215,9 +240,6 @@ body {
   cursor: grab;
 }
 .calendar-strip:active { cursor: grabbing; }
-.calendar-strip::-webkit-scrollbar { height: 8px; }
-.calendar-strip::-webkit-scrollbar-track { background: var(--bg-scrollbar-track); border-radius: 20px; }
-.calendar-strip::-webkit-scrollbar-thumb { background: var(--bg-scrollbar-thumb); border-radius: 20px; }
 
 /* Карточка дня */
 .day-card {
@@ -332,17 +354,7 @@ body {
   scrollbar-width: thin;
   transition: background 0.3s ease;
 }
-.tasks-list::-webkit-scrollbar {
-  width: 6px;
-}
-.tasks-list::-webkit-scrollbar-track {
-  background: var(--bg-scrollbar-track);
-  border-radius: 10px;
-}
-.tasks-list::-webkit-scrollbar-thumb {
-  background: var(--bg-scrollbar-thumb);
-  border-radius: 10px;
-}
+
 .task-item {
   background: var(--bg-task-item);
   margin: 6px 0;
