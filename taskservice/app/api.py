@@ -111,6 +111,8 @@ def update_task(task_id):
             upd_task_dto.due_date = date.fromisoformat(upd_task_dto.due_date).isoformat()
         except ValueError:
             return jsonify({"error": "Invalid due_date format, use YYYY-MM-DD"}), 400
+    if upd_task_dto.closed_dttm is not None:
+        upd_task_dto.task_status = 2
     # может работа фронта, но: обновление closed date относительно статуса, если он изменился
     if upd_task_dto.task_status is not None:
         if upd_task_dto.task_status == 1:

@@ -184,9 +184,9 @@
 
 /* Секции */
 .form-section {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--modal-section-border);
-  padding-bottom: 1.5rem;
 }
 
 .form-section:last-child {
@@ -201,13 +201,13 @@
   gap: 8px;
   font-weight: 600;
   color: var(--section-title);
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
   font-size: 0.95rem;
 }
 
 /* Группы полей */
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-group label {
@@ -215,7 +215,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--label-color);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .form-group input,
@@ -253,7 +253,7 @@
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .input-icon {
@@ -692,4 +692,61 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ==================== Кнопка "Показать больше" ==================== */
+
+.link-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.show-more-btn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--icon-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.show-more-btn:hover {
+  background: var(--btn-secondary-bg);
+  color: var(--section-title);
+}
+
+.show-more-btn svg {
+  transition: transform 0.3s ease;
+}
+
+/* ==================== Расширяемая секция ==================== */
+
+.expandable-section {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease;
+  margin-top: 0;
+}
+
+.expandable-section.expanded {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 0.15rem;
+}
+
+.expandable-section .form-row {
+  margin-bottom: 0;
+}
+
+.expandable-section .form-group {
+  margin-bottom: 0;
 }

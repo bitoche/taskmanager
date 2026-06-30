@@ -338,6 +338,7 @@ const App: React.FC = () => {
         description: taskData.description ?? undefined,
         link_to_taskmanager: taskData.link_to_taskmanager ?? undefined,
         due_date: taskData.due_date ?? undefined,
+        closed_dttm: taskData.closed_dttm ?? undefined,
         task_status: taskData.task_status ?? undefined,
       };
       await updateTask(modalState.task.task_id, updateDto);

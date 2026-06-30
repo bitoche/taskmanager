@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Task, TaskComment, TaskTag } from '../types';
 import { fetchTaskComments, addTaskComment, deleteTaskComment } from '../api';
-import { X, Send, Trash2, Plus, Tag, MessageSquare, FileText, ExternalLink, Calendar, Check } from 'lucide-react';
+import { X, Send, Trash2, Plus, Tag, MessageSquare, FileText, ExternalLink, Calendar, Check, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { MarkdownEditor, renderMarkdown } from './MarkdownEditor';
 import './TaskModal.css';
 
@@ -28,6 +28,10 @@ const TaskModal: React.FC<Props> = ({
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [link, setLink] = useState('');
+  const [closedDate, setClosedDate] = useState('');
+
+  // Состояние для раскрытия дополнительных полей
+  const [showMore, setShowMore] = useState(false);
 
   // Комментарии
   const [comments, setComments] = useState<TaskComment[]>([]);
@@ -44,7 +48,7 @@ const TaskModal: React.FC<Props> = ({
   const tagSelectorRef = useRef<HTMLDivElement>(null);
 
   // === Отслеживание изменений формы (пункт 3.2) ===
-  const originalDataRef = useRef<{ title: string; description: string; dueDate: string; link: string } | null>(null);
+  const originalDataRef = useRef<{ title: string; description: string; dueDate: string; link: string; closedDate: string } | null>(null);
   const hasModalChangesRef = useRef(false);
 
   // Загрузка комментариев при открытии для существующей задачи
@@ -61,18 +65,35 @@ const TaskModal: React.FC<Props> = ({
       setDescription(task.description || '');
       setDueDate(task.due_date ? task.due_date.slice(0, 10) : '');
       setLink(task.link_to_taskmanager || '');
+      // closed_dttm: преобразуем ISO в datetime-local формат
+      if (task.closed_dttm) {
+        const dt = new Date(task.closed_dttm);
+        const year = dt.getFullYear();
+        const month = String(dt.getMonth() + 1).padStart(2, '0');
+        const day = String(dt.getDate()).padStart(2, '0');
+        const hours = String(dt.getHours()).padStart(2, '0');
+        const minutes = String(dt.getMinutes()).padStart(2, '0');
+        setClosedDate(`${year}-${month}-${day}T${hours}:${minutes}`);
+        // Автоматически раскрыть секцию, если есть дата закрытия
+        setShowMore(true);
+      } else {
+        setClosedDate('');
+      }
       originalDataRef.current = {
         title: task.title,
         description: task.description || '',
         dueDate: task.due_date ? task.due_date.slice(0, 10) : '',
         link: task.link_to_taskmanager || '',
+        closedDate: task.closed_dttm ? task.closed_dttm.slice(0, 16) : '',
       };
     } else {
       setTitle('');
       setDescription('');
       setDueDate(defaultDate || '');
       setLink('');
-      originalDataRef.current = { title: '', description: '', dueDate: defaultDate || '', link: '' };
+      setClosedDate('');
+      setShowMore(false);
+      originalDataRef.current = { title: '', description: '', dueDate: defaultDate || '', link: '', closedDate: '' };
     }
   }, [task, defaultDate]);
 
@@ -84,10 +105,11 @@ const TaskModal: React.FC<Props> = ({
       title !== orig.title ||
       description !== orig.description ||
       dueDate !== orig.dueDate ||
-      link !== orig.link
+      link !== orig.link ||
+      closedDate !== orig.closedDate
     );
     hasModalChangesRef.current = changed;
-  }, [title, description, dueDate, link]);
+  }, [title, description, dueDate, link, closedDate]);
 
   // Закрытие селектора тегов при клике вне его области
   useEffect(() => {
@@ -130,6 +152,7 @@ const TaskModal: React.FC<Props> = ({
       link_to_taskmanager: link.trim() || null,
       due_date: dueDate || null,
       task_status: task?.task_status ?? null,
+      closed_dttm: closedDate || null,
     });
     onClose();
   };
@@ -287,7 +310,7 @@ const TaskModal: React.FC<Props> = ({
                     />
                   </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group link-group">
                   <label>Ссылка</label>
                   <div className="input-icon">
                     <ExternalLink size={16} />
@@ -297,6 +320,31 @@ const TaskModal: React.FC<Props> = ({
                       onChange={(e) => setLink(e.target.value)}
                       placeholder="https://..."
                     />
+                  </div>
+                  <button
+                    type="button"
+                    className="show-more-btn"
+                    onClick={() => setShowMore(!showMore)}
+                  >
+                    {showMore ? 'Скрыть' : 'Показать больше'}
+                    {showMore ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Расширяемая секция с датой закрытия */}
+              <div className={`expandable-section ${showMore ? 'expanded' : ''}`}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Дата закрытия</label>
+                    <div className="input-icon">
+                      <Clock size={16} />
+                      <input
+                        type="datetime-local"
+                        value={closedDate}
+                        onChange={(e) => setClosedDate(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

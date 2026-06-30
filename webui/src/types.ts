@@ -22,6 +22,7 @@ export interface UpdateTaskDTO {
   description?: string | null;
   link_to_taskmanager?: string | null;
   due_date?: string | null;
+  closed_dttm?: string | null;
   task_status?: number | null;
 }
 
